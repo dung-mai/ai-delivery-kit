@@ -19,5 +19,8 @@ Rules for every agent working in this repo (Claude Code, Codex, OpenCode, …). 
 7. Never commit secrets, never log credentials, never edit `.env`.
 8. Before you stop: run `node .flow/sensors/flow.mjs check` and fix what it reports.
 
+## Code
+Follow `docs/conventions.md` and copy the structure of the reference module it names. Record deliberate shortcuts in `product/debt.md`.
+
 ## Checks
 `node .flow/sensors/flow.mjs check` (framework checks) plus the project commands listed in `.flow/config.json` → `checks`.

@@ -36,11 +36,11 @@ Hoặc cứ nói tự nhiên: "build đang lỗi quyền git, xử lý đi", "ch
 |---|---|---|
 | Conductor | `CLAUDE.md`, skill `flow` | Phiên chính: đọc trạng thái, chọn công thức, giao việc, hỏi bạn ở điểm quyết định |
 | Chuyên gia | `.claude/agents/` | researcher, ba, architect, ux, qa, reviewer: mỗi vai một ngữ cảnh, tool giới hạn |
-| Khối | `.claude/skills/` | triage, discover, research, define, decide, ux-options, architect, plan, build, build-codex, verify, change, review-pack, retro |
+| Khối | `.claude/skills/` | triage, discover, research, define, decide, ux-options, architect, plan, conventions, build, build-codex, verify, change, review-pack, retro |
 | Công thức | `.flow/recipes/` | greenfield, feature, change, bug, spike, research |
 | Template | `.flow/templates/` | bối cảnh, bản đồ, spec, bảng ví dụ, thẻ quyết định, research, kiến trúc, ADR, slice, change, review |
-| Guard | `.flow/hooks/` | chặn sửa file đã chốt và `.env`, chặn lệnh nguy hiểm, chạy check khi dừng, đo token và giờ người, thông báo |
-| Sensor | `.flow/sensors/flow.mjs` | board, check, examples, trace, freeze, effort, review-pack |
+| Guard | `.flow/hooks/` | chặn sửa file đã chốt và `.env`, chặn lệnh nguy hiểm, format/lint file vừa sửa, chạy check khi dừng, đo token và giờ người, thông báo |
+| Sensor | `.flow/sensors/flow.mjs` | board, check, examples, trace, freeze, effort, review-pack, shots |
 | Sự thật sản phẩm | `product/` | context, map, specs, decisions, changes, research, ux, architecture, plan |
 | Trạng thái | `work/`, `.flow/state/` | BOARD.md, sổ effort, review, bằng chứng |
 
@@ -66,3 +66,14 @@ Hoặc cứ nói tự nhiên: "build đang lỗi quyền git, xử lý đi", "ch
 ## Tuỳ chỉnh cho dự án
 
 `.flow/config.json`: ngôn ngữ, engine build/review, model từng vai, lệnh check của dự án (`checks`), thư mục code, đường dẫn mốc effort, thông báo. Luật riêng của dự án viết vào `AGENTS.md`; thông tin sản phẩm viết vào `product/context.md`.
+
+## Chất lượng code
+
+- **Máy bắt lỗi trước:** formatter, linter, TypeScript strict, luật ranh giới module, giới hạn độ dài, phát hiện code trùng và code chết. Skill `conventions` dựng các luật này ở slice 0 (dự án mới) hoặc rút từ code có sẵn (dự án cũ).
+- **Bắt ngay khi sửa:** hook PostToolUse chạy `post_edit.format` và `post_edit.lint` trong `.flow/config.json`, **chỉ cho file vừa sửa**, mỗi lệnh tối đa 15 giây. Để trống thì hook không làm gì. Check toàn dự án (`checks`) chỉ chạy khi dừng.
+- **Mẫu thay cho lời dặn:** một module tham chiếu được người duyệt kỹ; `docs/conventions.md` chỉ ra module đó, module mới làm theo.
+- **Không để nợ vô hình:** mỗi slice có walkthrough một trang; làm tắt có chủ ý thì ghi vào `product/debt.md`.
+
+## UI
+
+`ux-options` dùng design system có sẵn (mặc định shadcn/ui + Tailwind + theme bạn chọn), moodboard bạn chọn từ các sản phẩm tham khảo, và vòng chụp ảnh (`flow.mjs shots`) rồi tự chấm theo `.flow/templates/ui-critique.md`. Có hai mức trong `ui.level`: `quick` (mặc định, 1 phương án, 1 vòng chấm) và `full` (3 phương án, 2 vòng chấm, tuỳ chọn v0, test so ảnh).

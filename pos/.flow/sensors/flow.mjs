@@ -13,6 +13,7 @@
 //   freeze add <paths..> | check | release <path> | list
 //   effort log <minutes> "<note>" [--item X] | machine <engine> <tokens> "<note>" | done <item> [percent] | report
 //   review-pack [--mark-approved] [--no-pdf]
+//   shots <file.html|url> [--out dir] [--name n]   desktop/tablet/mobile screenshots for the UI critique loop
 import { execSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -556,7 +557,33 @@ code{background:var(--soft);border:1px solid var(--line);border-radius:4px;paddi
 
 function die(m) { console.error(m); process.exit(1); }
 
+// ---------- screenshots for the UI critique loop ----------
+// shots <file.html|url> [--out <dir>] [--name <name>] [--sizes desktop,tablet,mobile]
+async function shots() {
+  const target = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1]?.startsWith('--') !== true);
+  if (!target) die('shots <file.html|url> [--out dir] [--name name] [--sizes desktop,tablet,mobile]');
+  const out = flag('--out') || 'work/evidence/shots';
+  const name = flag('--name') || path.basename(String(target)).replace(/\.[a-z]+$/i, '').replace(/[^\w-]+/g, '-') || 'page';
+  const SIZES = { desktop: [1440, 900], tablet: [1024, 768], mobile: [390, 844] };
+  const sizes = String(flag('--sizes') || 'desktop,tablet,mobile').split(',').filter((x) => SIZES[x]);
+  let pw;
+  try { pw = await import('playwright'); } catch { try { pw = createRequire(path.join(base, 'noop.js'))('playwright'); } catch { die('Playwright is not installed: npm i -D playwright && npx playwright install chromium'); } }
+  const url = /^https?:\/\//.test(target) ? target : 'file://' + path.resolve(target);
+  const b = await pw.chromium.launch();
+  fs.mkdirSync(out, { recursive: true });
+  for (const sz of sizes) {
+    const pg = await b.newPage({ viewport: { width: SIZES[sz][0], height: SIZES[sz][1] } });
+    await pg.goto(url, { waitUntil: 'networkidle' }).catch(() => pg.goto(url));
+    await pg.waitForTimeout(400);
+    const f = path.join(out, `${name}-${sz}.png`);
+    await pg.screenshot({ path: f, fullPage: true });
+    console.log(f);
+    await pg.close();
+  }
+  await b.close();
+}
+
 // ---------- dispatch (last, so every const above is initialised) ----------
-const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
+const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
 if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 16).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 await commands[cmd]();

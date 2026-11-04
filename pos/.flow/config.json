@@ -42,5 +42,15 @@
     "bell",
     "desktop"
   ],
-  "ntfy_topic": ""
+  "ntfy_topic": "",
+  "post_edit": {
+    "format": "",
+    "lint": "",
+    "timeout_s": 15,
+    "_note": "Commands for the file just edited, {file} = its path. Empty = off. Set by the conventions skill, e.g. format: \"npx biome format --write {file}\", lint: \"npx eslint {file}\"."
+  },
+  "ui": {
+    "level": "quick",
+    "_note": "quick: one direction on the chosen design system + moodboard, 1 critique round. full: 3 directions, 2 critique rounds, optional v0 exploration, visual regression baselines."
+  }
 }

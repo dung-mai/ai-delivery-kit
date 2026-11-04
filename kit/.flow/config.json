@@ -20,10 +20,37 @@
     "_note": "Stop hook warns when one session passes this many million tokens (input incl. cache + output)."
   },
   "checks": [],
-  "_checks_example": ["pnpm lint", "pnpm typecheck", "pnpm test"],
-  "code_dirs": ["apps", "packages", "src"],
-  "test_globs": ["**/*.test.*", "**/*.spec.*", "**/test/**", "**/tests/**", "**/e2e/**"],
+  "_checks_example": [
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test"
+  ],
+  "post_edit": {
+    "format": "",
+    "lint": "",
+    "timeout_s": 15,
+    "_note": "Commands for the file just edited, {file} = its path. Empty = off. Set by the conventions skill, e.g. format: \"npx biome format --write {file}\", lint: \"npx eslint {file}\"."
+  },
+  "code_dirs": [
+    "apps",
+    "packages",
+    "src"
+  ],
+  "test_globs": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/test/**",
+    "**/tests/**",
+    "**/e2e/**"
+  ],
   "baseline": "product/baseline-effort.md",
-  "notify": ["bell", "desktop"],
-  "ntfy_topic": ""
+  "notify": [
+    "bell",
+    "desktop"
+  ],
+  "ntfy_topic": "",
+  "ui": {
+    "level": "quick",
+    "_note": "quick: one direction on the chosen design system + moodboard, 1 critique round. full: 3 directions, 2 critique rounds, optional v0 exploration, visual regression baselines."
+  }
 }

@@ -40,6 +40,19 @@ if (update) {
   for (const p of FRAMEWORK) { fs.rmSync(path.join(dst, p), { recursive: true, force: true }); copy(path.join(kit, p), path.join(dst, p), true); }
   for (const p of KEEP_IF_EXISTS) copy(path.join(kit, p), path.join(dst, p), false);
   for (const p of ['product', 'work']) copy(path.join(kit, p), path.join(dst, p), false); // only adds missing skeleton files
+  // new settings in the kit's config are added to the project's config; existing values are never changed
+  const cf = path.join(dst, '.flow', 'config.json');
+  const mine = JSON.parse(fs.readFileSync(cf, 'utf8'));
+  const added = [];
+  const merge = (a, b, pre) => { for (const [k, v] of Object.entries(b)) { if (!(k in a)) { a[k] = v; added.push(pre + k); } else if (v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) merge(a[k], v, `${pre}${k}.`); } };
+  merge(mine, JSON.parse(fs.readFileSync(path.join(kit, '.flow', 'config.json'), 'utf8')), '');
+  if (added.length) { fs.writeFileSync(cf, JSON.stringify(mine, null, 2) + '\n'); console.log(`config.json: added ${added.join(', ')}`); }
+  // hooks the project does not have yet are added to .claude/settings.json the same way
+  const sf = path.join(dst, '.claude', 'settings.json');
+  const st = JSON.parse(fs.readFileSync(sf, 'utf8'));
+  const kh = JSON.parse(fs.readFileSync(path.join(kit, '.claude', 'settings.json'), 'utf8')).hooks || {};
+  const newHooks = Object.keys(kh).filter((ev) => !(st.hooks || {})[ev]);
+  if (newHooks.length) { st.hooks = { ...(st.hooks || {}), ...Object.fromEntries(newHooks.map((ev) => [ev, kh[ev]])) }; fs.writeFileSync(sf, JSON.stringify(st, null, 2) + '\n'); console.log(`settings.json: added hooks ${newHooks.join(', ')}`); }
 } else {
   copy(kit, dst, false);
 }
