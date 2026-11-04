@@ -1,0 +1,46 @@
+{
+  "language": "vi",
+  "project": "pos-lab",
+  "engines": {
+    "conductor": "claude",
+    "build": "codex",
+    "review": "claude",
+    "_note": "build: codex | claude. review must differ from build. Codex runs through the build-codex skill."
+  },
+  "models": {
+    "researcher": "sonnet",
+    "ba": "sonnet",
+    "architect": "opus",
+    "ux": "sonnet",
+    "qa": "sonnet",
+    "reviewer": "sonnet"
+  },
+  "budget": {
+    "session_tokens_m": 8,
+    "_note": "Stop hook warns when one session passes this many million tokens (input incl. cache + output)."
+  },
+  "checks": [],
+  "_checks_example": [
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test"
+  ],
+  "code_dirs": [
+    "apps",
+    "packages",
+    "src"
+  ],
+  "test_globs": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/test/**",
+    "**/tests/**",
+    "**/e2e/**"
+  ],
+  "baseline": "product/baseline-effort.md",
+  "notify": [
+    "bell",
+    "desktop"
+  ],
+  "ntfy_topic": ""
+}

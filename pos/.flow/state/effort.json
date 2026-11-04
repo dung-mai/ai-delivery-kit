@@ -1,0 +1,15 @@
+{
+  "human": [],
+  "machine": [],
+  "sessions": {
+    "5b8851bb-27d1-4baa-a8ba-387742f467f9": {
+      "tokens": 143884,
+      "humanMin": 0,
+      "machineMin": 0,
+      "model": "claude-sonnet-5-5",
+      "phase": "",
+      "at": "2026-11-04T04:30:18.988Z"
+    }
+  },
+  "done": {}
+}

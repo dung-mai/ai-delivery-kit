@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+// Install or update AI Delivery Kit v2 into a project folder.
+//
+//   node install.mjs <target-folder> [--project <name>] [--update]
+//
+// First install copies everything from kit/. --update refreshes only the framework parts
+// (skills, subagents, recipes, templates, hooks, sensors) and never touches product/, work/,
+// .flow/state/, .flow/config.json, AGENTS.md, CLAUDE.md or .claude/settings.json if they exist.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const kit = path.join(here, 'kit');
+const args = process.argv.slice(2);
+const target = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--project');
+const project = args.includes('--project') ? args[args.indexOf('--project') + 1] : null;
+const update = args.includes('--update');
+if (!target) { console.log('Usage: node install.mjs <target-folder> [--project <name>] [--update]'); process.exit(1); }
+
+const FRAMEWORK = ['.claude/skills', '.claude/agents', '.flow/recipes', '.flow/templates', '.flow/hooks', '.flow/sensors'];
+const KEEP_IF_EXISTS = ['AGENTS.md', 'CLAUDE.md', '.claude/settings.json', '.flow/config.json'];
+let copied = 0, kept = 0;
+
+function copy(src, dst, overwrite) {
+  if (fs.statSync(src).isDirectory()) {
+    fs.mkdirSync(dst, { recursive: true });
+    for (const e of fs.readdirSync(src)) copy(path.join(src, e), path.join(dst, e), overwrite);
+    return;
+  }
+  if (fs.existsSync(dst) && !overwrite) { kept++; return; }
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+  fs.copyFileSync(src, dst);
+  copied++;
+}
+
+const dst = path.resolve(target);
+fs.mkdirSync(dst, { recursive: true });
+if (update) {
+  for (const p of FRAMEWORK) { fs.rmSync(path.join(dst, p), { recursive: true, force: true }); copy(path.join(kit, p), path.join(dst, p), true); }
+  for (const p of KEEP_IF_EXISTS) copy(path.join(kit, p), path.join(dst, p), false);
+  for (const p of ['product', 'work']) copy(path.join(kit, p), path.join(dst, p), false); // only adds missing skeleton files
+} else {
+  copy(kit, dst, false);
+}
+
+if (project) {
+  const f = path.join(dst, '.flow', 'config.json');
+  const c = JSON.parse(fs.readFileSync(f, 'utf8'));
+  c.project = project;
+  fs.writeFileSync(f, JSON.stringify(c, null, 2) + '\n');
+}
+fs.mkdirSync(path.join(dst, '.flow', 'state'), { recursive: true });
+const gi = path.join(dst, '.gitignore');
+const want = ['work/review-pack/', 'node_modules/'];
+const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
+const add = want.filter((l) => !cur.split('\n').includes(l));
+if (add.length) fs.appendFileSync(gi, (cur && !cur.endsWith('\n') ? '\n' : '') + add.join('\n') + '\n');
+
+console.log(`${update ? 'Updated' : 'Installed'} AI Delivery Kit v2 in ${dst}: ${copied} file copied, ${kept} kept.`);
+console.log('Next: open Claude Code in that folder and type  /flow "<what you want to build>"');
