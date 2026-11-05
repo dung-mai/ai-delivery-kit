@@ -14,7 +14,13 @@
 //   effort log <minutes> "<note>" [--item X] | machine <engine> <tokens> "<note>" | done <item> [percent] | report
 //   review-pack [--mark-approved] [--no-pdf]
 //   shots <file.html|url> [--out dir] [--name n]   desktop/tablet/mobile screenshots for the UI critique loop
-import { execSync, spawnSync } from 'node:child_process';
+//   run <name> -- <command>        run a long job (codex, tests…) with a log in work/jobs/, visible in watch/statusline
+//   jobs | logs <name> [-n 40]     list jobs / show the end of a job log
+//   watch                          live view for a second terminal: phase, agents, jobs, usage (Ctrl+C to quit)
+//   timeline                       where the time went: phases, jobs, subagents, sessions
+//   doctor                         check tools and settings (codex sandbox, playwright, engines)
+//   resume-report [--fix]          what was interrupted (jobs, subagents, uncommitted code, worktrees)
+import { execSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,8 +52,15 @@ const P = {
   changes: 'product/changes',
   map: 'product/map.md',
   slices: 'product/plan/slices.md',
+  jobs: '.flow/state/jobs',
+  agents: '.flow/state/agents',
+  summary: '.flow/state/summary.json',
+  usage: '.flow/state/usage.json',
+  lastCheck: '.flow/state/last-check.json',
 };
-const cfg = readJson(P.config, {});
+const deepMerge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b || {})) o[k] = v && typeof v === 'object' && !Array.isArray(v) && a?.[k] && typeof a[k] === 'object' ? deepMerge(a[k], v) : v; return o; };
+// .flow/config.local.json (git-ignored) overrides per machine, e.g. DeepSeek only at home
+const cfg = deepMerge(readJson(P.config, {}), readJson('.flow/config.local.json', {}));
 const ID_RE = /\b([A-Z]{2,5})-(R|S)(\d{2,3})\b|\b([A-Z]{2,5})-EX-(\d{2,3})\b/g;
 
 // ---------- small utils ----------
@@ -264,6 +277,8 @@ function board() {
   if (issues.length) out.push('', '## Kiểm tra', ...issues.map((i) => `- ${i}`));
   if (s.history?.length) out.push('', '## Gần đây', ...s.history.slice(-6).reverse().map((h) => `- ${local(h.at)} · ${h.event}`));
   write(P.board, out.join('\n') + '\n');
+  writeJson(P.summary, { at: now(), recipe: s.recipe || '', phase: s.phase || '', needYou: blocking.length + ask.length + ch.length, blocking: blocking.length, checks: issues.length,
+    slices: { done: sl.filter((x) => x.done).length, total: sl.length }, current: (sl.find((x) => !x.done) || {}).name || '' });
   if (cmd === 'board') console.log(`Wrote ${P.board}`);
 }
 
@@ -583,7 +598,175 @@ async function shots() {
   await b.close();
 }
 
+// ---------- jobs: long commands with a log, visible to watch/statusline, resumable ----------
+function jobFiles() { return fs.existsSync(P.jobs) ? fs.readdirSync(P.jobs).filter((f) => f.endsWith('.json')).map((f) => readJson(path.join(P.jobs, f), null)).filter(Boolean) : []; }
+function agentFiles() { return fs.existsSync(P.agents) ? fs.readdirSync(P.agents).filter((f) => f.endsWith('.json')).map((f) => ({ ...readJson(path.join(P.agents, f), {}), id: f.replace('.json', '') })) : []; }
+function alive(pid) { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } }
+function ago(iso) { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; }
+function dur(a, b) { const m = Math.round((Date.parse(b) - Date.parse(a)) / 60000); return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; }
+
+async function run() {
+  const sep = args.indexOf('--');
+  const name = args[0];
+  if (!name || name === '--' || sep < 0 || sep === args.length - 1) die('run <name> -- <command>');
+  if (!/^[\w.-]+$/.test(name)) die('job name: letters, digits, . _ - only');
+  const command = args.slice(sep + 1).join(' ');
+  fs.mkdirSync('work/jobs', { recursive: true });
+  const log = `work/jobs/${name}.log`;
+  const out = fs.createWriteStream(log, { flags: 'a' });
+  out.write(`\n$ ${command}\n# started ${now()}\n`);
+  const child = spawn(command, { shell: true, cwd: base, stdio: ['ignore', 'pipe', 'pipe'], env: process.env });
+  const file = path.join(P.jobs, `${name}.json`);
+  const job = { name, command, pid: child.pid, runner: process.pid, started: now(), status: 'running', log };
+  writeJson(file, job);
+  let tail = '';
+  const onData = (d) => { out.write(d); process.stdout.write(d); tail = (tail + d).slice(-6000); };
+  child.stdout.on('data', onData);
+  child.stderr.on('data', onData);
+  const stop = () => { try { child.kill(); } catch {} };
+  process.on('SIGINT', stop); process.on('SIGTERM', stop);
+  const code = await new Promise((r) => child.on('close', (c) => r(c ?? 1)));
+  const tok = tail.match(/tokens used\W*([\d][\d,.]*)/i);
+  const done = { ...job, status: code === 0 ? 'done' : 'failed', exit: code, ended: now(), last: tail.trim().split('\n').slice(-3).join(' | ').slice(0, 300) };
+  if (tok) {
+    done.tokens = Number(tok[1].replace(/[,.]/g, ''));
+    const e = readJson(P.effort, { human: [], machine: [], sessions: {}, done: {} });
+    e.machine.push({ at: now(), engine: /codex/.test(command) ? 'codex' : /opencode|deepseek/.test(command) ? 'deepseek' : 'other', tokens: done.tokens, minutes: Math.round((Date.now() - Date.parse(job.started)) / 60000), note: name });
+    writeJson(P.effort, e);
+  }
+  writeJson(file, done);
+  out.write(`\n# ${done.status} (exit ${code}) ${now()}\n`);
+  out.end();
+  try { renderLedger(); board(); } catch {}
+  process.exit(code);
+}
+function jobs() {
+  const list = jobFiles().sort((a, b) => Date.parse(b.started) - Date.parse(a.started));
+  if (!list.length) { console.log('Chưa có job nào.'); return; }
+  for (const j of list) {
+    const st = j.status === 'running' && !alive(j.runner) ? 'interrupted' : j.status;
+    console.log(`${st.padEnd(11)} ${j.name.padEnd(18)} ${j.status === 'running' ? ago(j.started) : dur(j.started, j.ended || j.started)}  ${j.tokens ? fmtTok(j.tokens) + ' tok  ' : ''}${j.log}`);
+  }
+}
+function logs() {
+  const name = args[0]; if (!name) die('logs <name> [-n 40]');
+  const n = Number(flag('-n')) || 40;
+  const t = read(`work/jobs/${name}.log`);
+  if (!t) die(`no log for ${name}`);
+  console.log(t.trimEnd().split('\n').slice(-n).join('\n'));
+}
+
+// ---------- live view ----------
+function liveLines() {
+  const s = readJson(P.state, {});
+  const sum = readJson(P.summary, {});
+  const usage = readJson(P.usage, null);
+  const L = [];
+  L.push(`◆ ${cfg.project || path.basename(base)} · ${s.recipe || 'chưa bắt đầu'} › ${s.phase || '-'}${sum.slices?.total ? ` · slice ${sum.slices.done}/${sum.slices.total}${sum.current ? ` (đang: ${sum.current})` : ''}` : ''}`);
+  if (usage?.five_hour != null) L.push(`  Claude 5h: ${Math.round(usage.five_hour)}%${usage.resets_at ? ` (reset ${new Date(usage.resets_at * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})` : ''}${usage.seven_day != null ? ` · 7 ngày: ${Math.round(usage.seven_day)}%` : ''}`);
+  L.push(`  Cần bạn: ${sum.needYou || 0}${sum.blocking ? ` (⛔ ${sum.blocking} chặn)` : ''} · vấn đề check: ${sum.checks || 0}`);
+  const ag = agentFiles();
+  const runningAg = ag.filter((a) => a.status === 'running');
+  L.push('', `Subagent đang chạy (${runningAg.length})`);
+  for (const a of runningAg) L.push(`  ⏳ ${String(a.type || 'agent').padEnd(14)} ${ago(a.started)}`);
+  for (const a of ag.filter((x) => x.status !== 'running').sort((x, y) => Date.parse(y.ended || 0) - Date.parse(x.ended || 0)).slice(0, 3)) L.push(`  ✓ ${String(a.type || 'agent').padEnd(14)} ${a.ended ? dur(a.started, a.ended) : ''}`);
+  const js = jobFiles().sort((a, b) => Date.parse(b.started) - Date.parse(a.started));
+  const running = js.filter((j) => j.status === 'running' && alive(j.runner));
+  L.push('', `Job (${running.length} đang chạy)`);
+  for (const j of js.slice(0, 6)) {
+    const st = j.status === 'running' ? (alive(j.runner) ? '⏳' : '⚠ dừng') : j.status === 'done' ? '✓' : '✗';
+    const last = j.status === 'running' ? read(j.log).trimEnd().split('\n').filter(Boolean).slice(-1)[0] || '' : j.last || '';
+    L.push(`  ${st} ${j.name.padEnd(16)} ${j.status === 'running' ? ago(j.started) : dur(j.started, j.ended || j.started)}  ${last.slice(0, 90)}`);
+  }
+  if (s.history?.length) { L.push('', 'Gần đây'); for (const h of s.history.slice(-5).reverse()) L.push(`  ${local(h.at)} · ${h.event}`); }
+  return L;
+}
+async function watch() {
+  const draw = () => process.stdout.write('\x1b[2J\x1b[H' + liveLines().join('\n') + `\n\n(cập nhật ${new Date().toLocaleTimeString('vi-VN')} · Ctrl+C để thoát)\n`);
+  draw();
+  if (args.includes('--once')) return;
+  setInterval(draw, 2000);
+  await new Promise(() => {});
+}
+
+// ---------- where did the time go ----------
+function timeline() {
+  const s = readJson(P.state, {});
+  const rows = [];
+  const hist = (s.history || []).filter((h) => /^(start|phase|gate)/.test(h.event));
+  for (let i = 0; i < hist.length; i++) {
+    if (!/^phase|^start/.test(hist[i].event)) continue;
+    const next = hist.slice(i + 1).find((h) => /^phase|^start/.test(h.event));
+    rows.push({ kind: 'bước', name: hist[i].event.replace(/^phase /, ''), start: hist[i].at, end: next?.at || now(), open: !next });
+  }
+  for (const j of jobFiles()) { const dead = j.status === 'running' && !alive(j.runner); rows.push({ kind: 'job', name: j.name, start: j.started, end: j.ended || (dead ? j.started : now()), open: j.status === 'running' && !dead, note: dead ? 'interrupted' : j.status }); }
+  for (const a of agentFiles()) rows.push({ kind: 'subagent', name: a.type || a.id, start: a.started, end: a.ended || now(), open: a.status === 'running' });
+  if (!rows.length) { console.log('Chưa có dữ liệu thời gian.'); return; }
+  rows.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  const t0 = Date.parse(rows[0].start);
+  for (const r of rows) console.log(`${local(r.start).padEnd(20)} +${String(Math.round((Date.parse(r.start) - t0) / 60000)).padStart(4)}m  ${r.kind.padEnd(9)} ${String(r.name).padEnd(26)} ${dur(r.start, r.end).padStart(6)}${r.open ? ' (đang chạy)' : ''}${r.note && r.note !== 'done' ? ` ${r.note}` : ''}`);
+  const e = readJson(P.effort, { sessions: {} });
+  const sess = Object.values(e.sessions || {});
+  if (sess.length) console.log(`\nPhiên Claude: ${sess.length} · máy chạy ${sess.reduce((a, x) => a + (x.machineMin || 0), 0)} phút · bạn chờ/đọc ~${sess.reduce((a, x) => a + (x.humanMin || 0), 0)} phút`);
+  const steps = rows.filter((r) => r.kind === 'bước' && !r.open).map((r) => ({ ...r, m: (Date.parse(r.end) - Date.parse(r.start)) / 60000 })).sort((a, b) => b.m - a.m).slice(0, 3);
+  if (steps.length) console.log(`Bước lâu nhất: ${steps.map((r) => `${r.name} ${Math.round(r.m)}m`).join(', ')}`);
+  const par = rows.filter((r) => r.kind !== 'bước');
+  let overlap = 0; for (let i = 0; i < par.length; i++) for (let k = i + 1; k < par.length; k++) if (Date.parse(par[k].start) < Date.parse(par[i].end) && Date.parse(par[i].start) < Date.parse(par[k].end)) overlap++;
+  console.log(`Số cặp job/subagent chạy chồng thời gian (song song): ${overlap}`);
+}
+
+// ---------- doctor ----------
+function doctor() {
+  const ok = (b, msg, fix) => console.log(`${b ? '✓' : '✗'} ${msg}${!b && fix ? `\n    → ${fix}` : ''}`);
+  const has = (c, a = ['--version']) => { const r = spawnSync(c, a, { encoding: 'utf8', shell: process.platform === 'win32', timeout: 15000 }); return r.status === 0 ? (r.stdout || r.stderr).trim().split('\n')[0] : null; };
+  ok(Number(process.versions.node.split('.')[0]) >= 20, `Node ${process.versions.node}`, 'cần Node 20+');
+  const g = has('git'); ok(!!g, `git ${g || ''}`, 'cài git');
+  const c = has('claude'); ok(!!c, `Claude Code ${c || ''}`, 'npm i -g @anthropic-ai/claude-code');
+  const roles = cfg.roles || {};
+  const needCodex = Object.values(roles).includes('codex') || cfg.engines?.build === 'codex' || cfg.roles?.build === 'codex';
+  const cx = has('codex');
+  ok(!!cx || !needCodex, `Codex CLI ${cx || '(không có)'}`, 'npm i -g @openai/codex rồi chạy codex một lần để đăng nhập');
+  if (cx) {
+    const home = process.env.CODEX_HOME || path.join(process.env.HOME || process.env.USERPROFILE || '', '.codex');
+    const toml = read(path.join(home, 'config.toml'));
+    const args = (cfg.codex?.args || []).join(' ');
+    ok(/network_access\s*=\s*true/.test(toml) || /network_access=true/.test(args), 'Codex sandbox cho phép mạng (cần để test gọi DB/localhost, cài gói)', 'thêm vào ~/.codex/config.toml:  [sandbox_workspace_write]  network_access = true   (hoặc để codex.args trong .flow/config.json như mặc định)');
+    if (process.platform === 'win32') ok(/\[windows\][^\[]*sandbox\s*=\s*"elevated"/s.test(toml) || /prefer_mxc\s*=\s*true/.test(toml), 'Codex trên Windows dùng sandbox elevated hoặc MXC', 'thêm vào ~/.codex/config.toml:  [windows]  sandbox = "elevated"   rồi chạy codex một lần, chấp nhận UAC. Hoặc dùng WSL2.');
+  }
+  if (Object.values(roles).includes('deepseek')) { const o = has('opencode'); ok(!!o, `OpenCode (DeepSeek) ${o || ''}`, 'máy này không dùng được DeepSeek: đặt roles.* về claude/codex trong .flow/config.local.json'); }
+  let pw = false; try { createRequire(path.join(base, 'noop.js'))('playwright'); pw = true; } catch {}
+  ok(pw, 'Playwright (chụp ảnh UI, PDF review pack)', 'npm i -D playwright && npx playwright install chromium');
+  ok(fs.existsSync('.flow/config.local.json') || true, `Cấu hình máy này: ${fs.existsSync('.flow/config.local.json') ? '.flow/config.local.json' : 'không có (dùng mặc định)'}`);
+  console.log(`\nPhân việc hiện tại: ${Object.entries(roles).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `${k}=${v}`).join(' · ')}`);
+}
+
+// ---------- what was interrupted ----------
+function resumeReport() {
+  const fix = args.includes('--fix');
+  const items = [];
+  for (const j of jobFiles()) if (j.status === 'running' && !alive(j.runner)) {
+    items.push(`Job "${j.name}" bị dừng giữa chừng (bắt đầu ${local(j.started)}). Log: ${j.log}. Chạy lại cùng lệnh; brief nên bảo engine tiếp tục từ các task chưa tick.`);
+    if (fix) writeJson(path.join(P.jobs, `${j.name}.json`), { ...j, status: 'interrupted', ended: now() });
+  }
+  const st = readJson(P.state, {});
+  for (const a of agentFiles()) if (a.status === 'running') {
+    // at session start nothing can still be running; mid-session only very old entries are suspicious
+    const stale = args.includes('--at-start') || Date.now() - Date.parse(a.started) > 3 * 3600_000;
+    if (stale) { items.push(`Subagent ${a.type || a.id} không kết thúc (bắt đầu ${local(a.started)}). Kiểm tra đầu ra của nó trước khi giao lại.`); if (fix) writeJson(path.join(P.agents, `${a.id}.json`), { ...a, status: 'interrupted', ended: now() }); }
+  }
+  const dirs = (cfg.code_dirs || ['apps', 'packages', 'src']).filter((d) => fs.existsSync(d));
+  const dirty = dirs.length ? (spawnSync('git', ['status', '--porcelain', '--', ...dirs, 'product'], { encoding: 'utf8' }).stdout || '').trim().split('\n').filter(Boolean) : [];
+  if (dirty.length) items.push(`${dirty.length} file chưa commit (code/product). Xem git status; nếu là việc dở của bước "${st.phase || '?'}", kiểm tra rồi commit checkpoint trước khi làm tiếp.`);
+  const wt = (spawnSync('git', ['worktree', 'list', '--porcelain'], { encoding: 'utf8' }).stdout || '').split('\n').filter((l) => l.startsWith('worktree ')).slice(1);
+  if (wt.length) items.push(`${wt.length} worktree còn lại: ${wt.map((l) => l.slice(9)).join(', ')}. Gộp hoặc xoá (git worktree remove) khi slice của nó đã xong.`);
+  const u = readJson(P.usage, null);
+  if (u?.five_hour >= 85) items.push(`Quota Claude 5 giờ đã dùng ${Math.round(u.five_hour)}%: giao phần code còn lại cho Codex hoặc dừng ở checkpoint.`);
+  if (!items.length) { if (cmd === 'resume-report') console.log('Không có gì bị dừng giữa chừng.'); return; }
+  console.log('Bị dừng giữa chừng / cần dọn:');
+  for (const i of items) console.log(`- ${i}`);
+}
+
 // ---------- dispatch (last, so every const above is initialised) ----------
-const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
-if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 16).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
+if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 22).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 await commands[cmd]();

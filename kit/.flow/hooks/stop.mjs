@@ -3,6 +3,7 @@
 // 2) runs the framework checks and, when code changed, the project checks; on failure exit 2 so Claude fixes them,
 // 3) regenerates work/BOARD.md.
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { flow, kitBase, readInput, readJson } from './lib.mjs';
@@ -51,12 +52,24 @@ const problems = [];
 const fc = flow(base, 'check');
 if (fc.status !== 0) problems.push((fc.stdout || '') + (fc.stderr || ''));
 
+// Project checks only when code changed AND that exact state has not passed before: a chat turn that only
+// discusses or edits docs, or a second stop on the same code, costs nothing.
 const codeDirs = (cfg.code_dirs || ['apps', 'packages', 'src']).filter((d) => fs.existsSync(path.join(base, d)));
-const changed = codeDirs.length && (spawnSync('git', ['status', '--porcelain', '--', ...codeDirs], { cwd: base, encoding: 'utf8' }).stdout || '').trim();
-if (changed) {
-  for (const c of cfg.checks || []) {
-    const r = spawnSync(c, { cwd: base, shell: true, encoding: 'utf8', timeout: 600_000 });
-    if (r.status !== 0) { problems.push(`$ ${c}\n` + ((r.stdout || '') + (r.stderr || '')).trim().split('\n').slice(-25).join('\n')); break; }
+const git = (...a) => spawnSync('git', a, { cwd: base, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout || '';
+const changed = codeDirs.length && git('status', '--porcelain', '--untracked-files=all', '--', ...codeDirs).trim();
+// untracked files are not in `git diff`: fingerprint them by size + mtime
+const untracked = () => changed.split('\n').filter((l) => l.startsWith('??')).map((l) => { const f = l.slice(3); try { const s = fs.statSync(path.join(base, f)); return `${f}:${s.size}:${s.mtimeMs}`; } catch { return f; } }).join('|');
+if (changed && (cfg.checks || []).length) {
+  const fp = createHash('sha1').update(git('rev-parse', 'HEAD') + changed + untracked() + git('diff', 'HEAD', '--', ...codeDirs)).digest('hex');
+  const lastFile = path.join(base, '.flow', 'state', 'last-check.json');
+  const last = readJson(lastFile, {});
+  if (last.fp !== fp || !last.ok) {
+    let ok = true;
+    for (const c of cfg.checks) {
+      const r = spawnSync(c, { cwd: base, shell: true, encoding: 'utf8', timeout: 600_000 });
+      if (r.status !== 0) { ok = false; problems.push(`$ ${c}\n` + ((r.stdout || '') + (r.stderr || '')).trim().split('\n').slice(-25).join('\n')); break; }
+    }
+    fs.writeFileSync(lastFile, JSON.stringify({ fp, ok, at: new Date().toISOString() }));
   }
 }
 flow(base, 'board');

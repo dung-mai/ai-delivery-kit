@@ -1,11 +1,32 @@
 {
   "language": "vi",
   "project": "my-project",
-  "engines": {
-    "conductor": "claude",
+  "roles": {
+    "research": "claude",
+    "ba": "claude",
+    "architect": "claude",
+    "ux": "codex",
+    "qa": "codex",
     "build": "codex",
     "review": "claude",
-    "_note": "build: codex | claude. review must differ from build. Codex runs through the build-codex skill."
+    "docs": "codex",
+    "_note": "Who does each role: claude | codex | deepseek. review must differ from build. Machine-specific overrides (e.g. deepseek at home only) go in .flow/config.local.json, which is git-ignored."
+  },
+  "codex": {
+    "args": [
+      "exec",
+      "--sandbox",
+      "workspace-write",
+      "-c",
+      "sandbox_workspace_write.network_access=true"
+    ],
+    "mode": "inplace",
+    "max_rounds": 2,
+    "_note": "inplace: Codex edits the main working tree while Claude does non-code work (no second node_modules, no install inside the sandbox). worktree: only for real parallel slices; the conductor prepares the worktree (install, db) before handing it over. Codex can never write .git: the conductor commits."
+  },
+  "deepseek": {
+    "command": "opencode run -m deepseek/deepseek-v4-flash",
+    "_note": "Used when a role is set to deepseek (usually only in config.local.json on a machine where the API is reachable)."
   },
   "models": {
     "researcher": "sonnet",
@@ -20,10 +41,11 @@
     "_note": "Stop hook warns when one session passes this many million tokens (input incl. cache + output)."
   },
   "checks": [],
+  "checks_full": [],
+  "_checks_note": "checks: fast (lint, typecheck), run by the Stop hook only when code changed since the last pass. checks_full: everything (tests, e2e), run in verify.",
   "_checks_example": [
     "pnpm lint",
-    "pnpm typecheck",
-    "pnpm test"
+    "pnpm typecheck"
   ],
   "post_edit": {
     "format": "",
@@ -52,5 +74,11 @@
   "ui": {
     "level": "quick",
     "_note": "quick: one direction on the chosen design system + moodboard, 1 critique round. full: 3 directions, 2 critique rounds, optional v0 exploration, visual regression baselines."
-  }
+  },
+  "_checks_full_example": [
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test",
+    "pnpm test:e2e"
+  ]
 }

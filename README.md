@@ -77,3 +77,21 @@ Hoặc cứ nói tự nhiên: "build đang lỗi quyền git, xử lý đi", "ch
 ## UI
 
 `ux-options` dùng design system có sẵn (mặc định shadcn/ui + Tailwind + theme bạn chọn), moodboard bạn chọn từ các sản phẩm tham khảo, và vòng chụp ảnh (`flow.mjs shots`) rồi tự chấm theo `.flow/templates/ui-critique.md`. Có hai mức trong `ui.level`: `quick` (mặc định, 1 phương án, 1 vòng chấm) và `full` (3 phương án, 2 vòng chấm, tuỳ chọn v0, test so ảnh).
+
+## Phân việc giữa Claude, Codex, DeepSeek
+
+`.flow/config.json` → `roles`: mỗi vai (research, ba, architect, ux, qa, build, review, docs) giao cho `claude`, `codex` hoặc `deepseek`. Mặc định Claude làm phần cần phán đoán (spec, quyết định, kiến trúc, review), Codex làm phần khối lượng (code, test, UI, tài liệu). Máy nào khác thì ghi đè trong `.flow/config.local.json` (không commit), ví dụ ở nhà cho research chạy DeepSeek: xem `.flow/config.local.example.json`.
+
+Codex chạy trong sandbox: không có mạng, không ghi được `.git`, không ghi ra ngoài thư mục. Vì vậy Claude chuẩn bị môi trường (cài gói, bật DB, chạy migration), Codex chỉ sửa code và chạy check, Claude commit. Mặc định Codex sửa ngay trong thư mục chính (`codex.mode: inplace`), chỉ dùng worktree khi chạy song song thật. Chạy `node .flow/sensors/flow.mjs doctor` một lần trên mỗi máy: nó kiểm tra sandbox của Codex có mở mạng không (test gọi DB trên localhost cần) và trên Windows đã cấu hình sandbox `elevated` chưa.
+
+## Theo dõi
+
+- **Status line** (luôn hiện dưới ô nhập của Claude Code, tự làm mới 5 giây): bước hiện tại, slice, số việc chờ bạn, subagent và job đang chạy, % quota Claude 5 giờ, % context.
+- **`node .flow/sensors/flow.mjs watch`** ở terminal thứ hai: màn hình sống gồm subagent, job (dòng log mới nhất), việc chờ bạn, quota, sự kiện gần đây.
+- **`/tasks`** trong Claude Code: shell và subagent đang chạy nền. **`claude agents`**: khi chạy nhiều phiên Claude Code cùng lúc.
+- **`flow.mjs jobs`, `flow.mjs logs <tên>`**: job dài (Codex, test) chạy qua `flow.mjs run <tên> -- <lệnh>` có log trong `work/jobs/`.
+- **`flow.mjs timeline`**: thời gian đi đâu: từng bước, job, subagent, việc nào chạy song song.
+
+## Bị dừng giữa chừng
+
+Mỗi bước xong được commit checkpoint. Khi mở lại phiên (kể cả `claude --continue`), hook SessionStart đánh dấu job và subagent bị cắt ngang, liệt kê code chưa commit và worktree còn sót; conductor xử lý từng mục rồi làm tiếp. Gõ `/flow resume` để xem lại bất cứ lúc nào. Quota Claude trên 85% thì conductor tự dừng ở checkpoint và giao phần code còn lại cho Codex.

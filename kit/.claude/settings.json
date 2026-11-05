@@ -9,7 +9,8 @@
       "Bash(git commit:*)",
       "Bash(git worktree:*)",
       "Bash(npx playwright:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(codex exec:*)"
     ],
     "deny": [
       "Read(./.env)",
@@ -71,6 +72,31 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.flow/hooks/agents.mjs\" start"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.flow/hooks/agents.mjs\" stop"
+          }
+        ]
+      }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"$CLAUDE_PROJECT_DIR/.flow/hooks/statusline.mjs\"",
+    "refreshInterval": 5
   }
 }

@@ -5,7 +5,7 @@ description: Independent check of a slice or iteration against specs and example
 
 # Verify
 
-1. Deterministic first: project checks from `.flow/config.json`, `node .flow/sensors/flow.mjs check`, `flow.mjs trace` (every rule and example covered by a test, every scenario marked), `flow.mjs freeze check`.
+1. Deterministic first: `checks_full` from `.flow/config.json` (falls back to `checks`), `node .flow/sensors/flow.mjs check`, `flow.mjs trace` (every rule and example covered by a test, every scenario marked), `flow.mjs freeze check`.
 2. Walkthrough: the builder (or you) writes `work/reviews/<slice>-walkthrough.md` from `.flow/templates/walkthrough.md`. One page; the human reads this instead of the whole diff.
 3. Reviewer subagent (read-only, not the builder's engine): compare the diff with the specs, examples, architecture, design system and `docs/conventions.md` + the reference module. Findings with severity (blocker / major / minor) and file:line. Convention drift is at least minor; drift from the reference module in a new module is major. Environment problems are listed separately with the command to fix them.
 4. Shortcuts accepted on purpose go to `product/debt.md` (template `debt.md`) with a DEBT id, linked from the walkthrough. Unrecorded shortcuts are findings.

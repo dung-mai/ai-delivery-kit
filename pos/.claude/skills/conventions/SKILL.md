@@ -13,7 +13,7 @@ AI follows examples and failing checks, not long prose. The output of this skill
    - formatter + linter config (e.g. Biome, or ESLint + Prettier), TypeScript `strict`;
    - module boundaries (e.g. eslint-plugin-boundaries or dependency-cruiser: domain imports no framework, modules talk through their public index only);
    - size limits (max lines per file and function, complexity), duplication (jscpd), unused code/deps (knip) when the stack supports them.
-   - Put the commands in `.flow/config.json`: `checks` (whole project, run at Stop) and `post_edit.format` / `post_edit.lint` (only the edited file, must run in a few seconds).
+   - Put the commands in `.flow/config.json`: `checks` (fast: lint + typecheck, run at Stop only when code changed), `checks_full` (everything incl. tests, run in verify) and `post_edit.format` / `post_edit.lint` (only the edited file, a few seconds).
 3. Build the **reference module**: one small module that goes through every layer the project uses (API → service → domain → data, UI screen → component → state), with tests, error handling and logging done the house way. The human reviews this one carefully: agents will copy it.
 4. Write `docs/conventions.md` (≤ 1 page): the table from step 1, "copy `<path of reference module>` for new modules", and the commands. Link it from `AGENTS.md` in one line. Add a short `AGENTS.md` inside big modules only when they have rules of their own.
 

@@ -50,9 +50,14 @@ if (update) {
   // hooks the project does not have yet are added to .claude/settings.json the same way
   const sf = path.join(dst, '.claude', 'settings.json');
   const st = JSON.parse(fs.readFileSync(sf, 'utf8'));
-  const kh = JSON.parse(fs.readFileSync(path.join(kit, '.claude', 'settings.json'), 'utf8')).hooks || {};
+  const kitSettings = JSON.parse(fs.readFileSync(path.join(kit, '.claude', 'settings.json'), 'utf8'));
+  const kh = kitSettings.hooks || {};
   const newHooks = Object.keys(kh).filter((ev) => !(st.hooks || {})[ev]);
-  if (newHooks.length) { st.hooks = { ...(st.hooks || {}), ...Object.fromEntries(newHooks.map((ev) => [ev, kh[ev]])) }; fs.writeFileSync(sf, JSON.stringify(st, null, 2) + '\n'); console.log(`settings.json: added hooks ${newHooks.join(', ')}`); }
+  if (!st.statusLine && kitSettings.statusLine) { st.statusLine = kitSettings.statusLine; console.log('settings.json: added statusLine'); }
+  const allowAdd = (kitSettings.permissions?.allow || []).filter((x) => !(st.permissions?.allow || []).includes(x));
+  if (allowAdd.length) { st.permissions = { ...(st.permissions || {}), allow: [...(st.permissions?.allow || []), ...allowAdd] }; console.log(`settings.json: allowed ${allowAdd.join(', ')}`); }
+  if (newHooks.length) { st.hooks = { ...(st.hooks || {}), ...Object.fromEntries(newHooks.map((ev) => [ev, kh[ev]])) }; console.log(`settings.json: added hooks ${newHooks.join(', ')}`); }
+  fs.writeFileSync(sf, JSON.stringify(st, null, 2) + '\n');
 } else {
   copy(kit, dst, false);
 }
@@ -65,7 +70,7 @@ if (project) {
 }
 fs.mkdirSync(path.join(dst, '.flow', 'state'), { recursive: true });
 const gi = path.join(dst, '.gitignore');
-const want = ['work/review-pack/', 'node_modules/'];
+const want = ['work/review-pack/', 'work/jobs/', '.worktrees/', '.flow/config.local.json', '.flow/state/agents/', '.flow/state/usage.json', '.flow/state/summary.json', '.flow/state/last-check.json', 'node_modules/'];
 const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
 const add = want.filter((l) => !cur.split('\n').includes(l));
 if (add.length) fs.appendFileSync(gi, (cur && !cur.endsWith('\n') ? '\n' : '') + add.join('\n') + '\n');
