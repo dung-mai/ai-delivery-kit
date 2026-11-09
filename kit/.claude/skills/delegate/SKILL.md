@@ -11,7 +11,7 @@ Read `.flow/config.json` (merged with `.flow/config.local.json`): `roles.<role>`
 |---|---|---|
 | claude | the matching subagent in `.claude/agents/` (Agent tool; run in background when you have other work) | judgement: specs, decisions, architecture, review, research that needs care |
 | codex | the build-codex skill steps: brief file + `flow.mjs run <name> -- codex …` in the background | code, tests from examples, HTML/UI work, screenshots, walkthroughs, review-pack text, mechanical edits across many files |
-| deepseek | brief file + `flow.mjs run <name> -- <deepseek.command> "Read work/briefs/<name>.md and follow it exactly."` | research summaries, drafts, docs on a machine where the API works |
+| deepseek | brief file `work/tasks/<name>.md` + `flow.mjs run <name> -- <deepseek.command> "Read work/tasks/<name>.md and follow it exactly."` | research summaries, drafts, docs on a machine where the API works |
 
 Rules
 - The brief file is the whole context: inputs (paths), output (paths + template), definition of done, language. Other engines cannot see this conversation or the subagent definitions.

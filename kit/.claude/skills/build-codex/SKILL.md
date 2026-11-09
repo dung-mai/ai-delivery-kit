@@ -15,15 +15,15 @@ Codex runs in a sandbox: by default it cannot reach the network, cannot write `.
   - `worktree`: only when two code slices really run in parallel. Create `.worktrees/<slice>` (git-ignored), then install dependencies there yourself before handing it over.
 
 ## 2. Brief
-Write `work/briefs/<slice>.md`: goal, ids covered, files to touch, the reference module to copy, checks to run, "do not edit frozen files", "do not run git commands, do not install packages, do not start or stop services; if something is missing, write it under BLOCKED in work/briefs/<slice>.result.md and stop". End with: "When done, write work/briefs/<slice>.result.md: what you changed, checks run and their result, anything BLOCKED". Self-contained: Codex cannot see this conversation.
+Write the `## Brief` section of `work/slices/<slice>.md` (one file per slice holds brief, Codex result, walkthrough and review): goal, ids covered, files to touch, the reference module to copy, checks to run, "do not edit frozen files", "do not run git commands, do not install packages, do not start or stop services; if something is missing, write it under BLOCKED in the `## Kết quả` section of work/slices/<slice>.md and stop". End with: "When done, fill the `## Kết quả` section of work/slices/<slice>.md: what you changed, checks run and their result, anything BLOCKED". Self-contained: Codex cannot see this conversation.
 
 ## 3. Run as a tracked job (background)
 Run with the Bash tool in the background (run_in_background):
-`node .flow/sensors/flow.mjs run <slice> -- codex <codex.args from config> "Read work/briefs/<slice>.md and follow it exactly."`
+`node .flow/sensors/flow.mjs run <slice> -- codex <codex.args from config> "Read the Brief section of work/slices/<slice>.md and follow it exactly."`
 A one-line prompt that points at a file avoids quoting problems on Windows. The job appears in the status line, `/tasks` and `flow.mjs watch`; tokens are recorded automatically.
 
 ## 4. When it ends
-- Read `work/briefs/<slice>.result.md` and `flow.mjs logs <slice>`.
+- Read the `## Kết quả` section of `work/slices/<slice>.md` and `flow.mjs logs <slice>`.
 - Classify a failure before reacting:
   | Symptom in log/result | Cause | Do |
   |---|---|---|

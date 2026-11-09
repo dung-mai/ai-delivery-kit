@@ -17,7 +17,7 @@ const HUMAN_GAP_CAP_MIN = 20; // a gap longer than this is a break, not review t
 try {
   const lines = fs.readFileSync(input.transcript_path, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
   const seen = new Set();
-  let tokens = 0, model = '', humanMs = 0, machineMs = 0;
+  let tokens = 0, cacheRead = 0, peakCtx = 0, model = '', humanMs = 0, machineMs = 0;
   let lastAssistant = null, turnStart = null;
   const isHumanPrompt = (e) => e.type === 'user' && !e.isMeta && !(Array.isArray(e.message?.content) && e.message.content.some((c) => c.type === 'tool_result'));
   for (const e of lines) {
@@ -27,7 +27,10 @@ try {
       const u = e.message?.usage;
       if (u && !seen.has(id)) {
         seen.add(id);
-        tokens += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.output_tokens || 0);
+        // fresh = what really costs quota; cache reads are re-reads of the same context at a fraction of the price
+        tokens += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.output_tokens || 0);
+        cacheRead += u.cache_read_input_tokens || 0;
+        peakCtx = Math.max(peakCtx, (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0));
         model = e.message?.model || model;
       }
       if (ts) lastAssistant = ts;
@@ -39,9 +42,10 @@ try {
     }
   }
   if (lastAssistant && turnStart) machineMs += Math.max(0, lastAssistant - turnStart);
-  if (input.session_id) flow(base, 'effort', 'session', input.session_id, String(tokens), String(Math.round(humanMs / 60_000)), String(Math.round(machineMs / 60_000)), model);
-  const cap = (cfg.budget?.session_tokens_m || 0) * 1e6;
-  if (cap && tokens > cap && !input.stop_hook_active) process.stderr.write(`Note: this session used ${(tokens / 1e6).toFixed(1)}M tokens (budget ${cfg.budget.session_tokens_m}M). Tell the human and suggest /compact or a fresh session for the next step.\n`);
+  if (input.session_id) flow(base, 'effort', 'session', input.session_id, String(tokens), String(Math.round(humanMs / 60_000)), String(Math.round(machineMs / 60_000)), model, String(cacheRead), String(peakCtx));
+  // The real quota is the 5h % on the status line. What we can control is context size: every turn re-reads it.
+  const ctxCap = (cfg.budget?.context_k || 120) * 1000;
+  if (peakCtx > ctxCap && !input.stop_hook_active) process.stderr.write(`Note: the context of this session reached ${Math.round(peakCtx / 1000)}k tokens; every turn re-reads it. Checkpoint the current step and continue in a fresh session (/clear): the state is in the repo files.\n`);
 } catch { /* no transcript: nothing to record */ }
 
 // avoid loops: when Claude is already continuing because of this hook, let it stop

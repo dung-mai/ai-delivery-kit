@@ -6,7 +6,7 @@ Rules for every agent working in this repo (Claude Code, Codex, OpenCode, …). 
 - `product/` — the truth about the product, written for humans (BA, client) first:
   `context.md` (goal, users, constraints, glossary), `map.md` (capability map), `specs/<capability>/spec.md` + `examples.md`,
   `decisions/D-xx-*.md` (decision cards), `changes/CR-xx-*/` (change requests as deltas), `research/`, `ux/`, `architecture/`, `plan/slices.md`.
-- `work/` — run state: `BOARD.md` (generated, do not edit), `effort-ledger.md`, `reviews/`, `evidence/`, `review-pack/`.
+- `work/` — run state: `BOARD.md` (generated), `effort-ledger.md`, `slices/<slice>.md` (one file per slice: brief, result, walkthrough, review), `evidence/<slice>/` (final screenshots only). Local only, git-ignored: `jobs/`, `tasks/`, `review-pack/`. Do not create other files in `work/`.
 - `.flow/` — framework: recipes, templates, hooks, sensors, `config.json`. `.claude/` — skills and subagents.
 
 ## Hard rules

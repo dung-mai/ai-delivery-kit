@@ -7,3 +7,6 @@ work/jobs/
 .flow/state/usage.json
 .flow/state/summary.json
 .flow/state/last-check.json
+work/tasks/
+work/briefs/
+.flow/state/jobs/

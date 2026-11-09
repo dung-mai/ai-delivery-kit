@@ -70,7 +70,7 @@ if (project) {
 }
 fs.mkdirSync(path.join(dst, '.flow', 'state'), { recursive: true });
 const gi = path.join(dst, '.gitignore');
-const want = ['work/review-pack/', 'work/jobs/', '.worktrees/', '.flow/config.local.json', '.flow/state/agents/', '.flow/state/usage.json', '.flow/state/summary.json', '.flow/state/last-check.json', 'node_modules/'];
+const want = ['work/review-pack/', 'work/jobs/', 'work/tasks/', 'work/briefs/', '.flow/state/jobs/', '.worktrees/', '.flow/config.local.json', '.flow/state/agents/', '.flow/state/usage.json', '.flow/state/summary.json', '.flow/state/last-check.json', 'node_modules/'];
 const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
 const add = want.filter((l) => !cur.split('\n').includes(l));
 if (add.length) fs.appendFileSync(gi, (cur && !cur.endsWith('\n') ? '\n' : '') + add.join('\n') + '\n');

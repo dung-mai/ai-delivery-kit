@@ -37,8 +37,8 @@
     "reviewer": "sonnet"
   },
   "budget": {
-    "session_tokens_m": 8,
-    "_note": "Stop hook warns when one session passes this many million tokens (input incl. cache + output)."
+    "context_k": 120,
+    "_note": "The Stop hook suggests a fresh session (/clear) when one turn's context passes this many thousand tokens: every turn re-reads the whole context. The real quota is the 5h % on the status line."
   },
   "checks": [],
   "checks_full": [],
@@ -80,5 +80,11 @@
     "pnpm typecheck",
     "pnpm test",
     "pnpm test:e2e"
-  ]
+  ],
+  "autopilot": {
+    "gates": "end",
+    "review_every": 1,
+    "stop_at_5h_percent": 85,
+    "_note": "/flow autopilot runs all remaining slices back to back. gates: end = one batch review at the end; each = stop after every slice."
+  }
 }

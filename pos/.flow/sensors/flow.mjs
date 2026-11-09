@@ -20,6 +20,7 @@
 //   timeline                       where the time went: phases, jobs, subagents, sessions
 //   doctor                         check tools and settings (codex sandbox, playwright, engines)
 //   resume-report [--fix]          what was interrupted (jobs, subagents, uncommitted code, worktrees)
+//   clean [--days 3]               delete local agent-only files (old job logs, briefs, old screenshot rounds)
 import { execSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -273,7 +274,7 @@ function board() {
   } else out.push('- (chưa có `product/map.md`)');
   const sl = sliceRows();
   out.push('', '## Slice', sl.length ? sl.map((x) => `- [${x.done ? 'x' : ' '}] ${x.name}`).join('\n') : '- (chưa có kế hoạch)');
-  out.push('', '## Effort', `- Giờ người: ${(e.humanMin / 60).toFixed(1)} h (${e.humanSessionsMin ? `${(e.humanSessionsMin / 60).toFixed(1)} h ước tính từ phiên chat, ` : ''}${(e.humanLoggedMin / 60).toFixed(1)} h ghi tay)`, `- Máy: ${fmtTok(e.tokens)} token · ${(e.machineMin / 60).toFixed(1)} h chạy`, '- Chi tiết: `work/effort-ledger.md`');
+  out.push('', '## Effort', `- Giờ người: ${(e.humanMin / 60).toFixed(1)} h (${e.humanSessionsMin ? `${(e.humanSessionsMin / 60).toFixed(1)} h ước tính từ phiên chat, ` : ''}${(e.humanLoggedMin / 60).toFixed(1)} h ghi tay)`, `- Máy: ${fmtTok(e.tokens)} token mới (+ ${fmtTok(e.cacheRead)} đọc lại từ cache, rẻ ~10%) · ${(e.machineMin / 60).toFixed(1)} h chạy · quota thật: % 5h trên status line`, '- Chi tiết: `work/effort-ledger.md`');
   if (issues.length) out.push('', '## Kiểm tra', ...issues.map((i) => `- ${i}`));
   if (s.history?.length) out.push('', '## Gần đây', ...s.history.slice(-6).reverse().map((h) => `- ${local(h.at)} · ${h.event}`));
   write(P.board, out.join('\n') + '\n');
@@ -394,7 +395,8 @@ function effortTotals() {
   const humanSessionsMin = sessions.reduce((a, x) => a + (x.humanMin || 0), 0);
   const tokens = sessions.reduce((a, x) => a + (x.tokens || 0), 0) + (e.machine || []).reduce((a, x) => a + (x.tokens || 0), 0);
   const machineMin = sessions.reduce((a, x) => a + (x.machineMin || 0), 0) + (e.machine || []).reduce((a, x) => a + (x.minutes || 0), 0);
-  return { e, humanLoggedMin, humanSessionsMin, humanMin: humanLoggedMin + humanSessionsMin, tokens, machineMin };
+  const cacheRead = sessions.reduce((a, x) => a + (x.cacheRead || 0), 0);
+  return { e, humanLoggedMin, humanSessionsMin, humanMin: humanLoggedMin + humanSessionsMin, tokens, cacheRead, machineMin };
 }
 function fmtTok(n) { return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n || 0); }
 function baselineItems() {
@@ -416,8 +418,8 @@ function effort() {
     const [engine, tokens, note = ''] = rest; if (!engine) die('effort machine <engine> <tokens> "<note>"');
     e.machine.push({ at: now(), engine, tokens: Number(String(tokens).replace(/[,.]/g, '')) || 0, minutes: Number(flag('--minutes')) || 0, note });
   } else if (sub === 'session') { // used by the Stop hook
-    const [id, tokens, humanMin, machineMin, model = ''] = rest;
-    e.sessions[id] = { tokens: Number(tokens) || 0, humanMin: Number(humanMin) || 0, machineMin: Number(machineMin) || 0, model, phase: readJson(P.state, {}).phase || '', at: now() };
+    const [id, tokens, humanMin, machineMin, model = '', cacheRead = '0', peakCtx = '0'] = rest;
+    e.sessions[id] = { tokens: Number(tokens) || 0, cacheRead: Number(cacheRead) || 0, peakCtx: Number(peakCtx) || 0, humanMin: Number(humanMin) || 0, machineMin: Number(machineMin) || 0, model, phase: readJson(P.state, {}).phase || '', at: now() };
   } else if (sub === 'done') {
     const [item, pct = '100'] = rest; if (!item) die('effort done <item> [percent]');
     e.done[item] = Number(pct);
@@ -434,7 +436,8 @@ function renderLedger() {
   const items = baselineItems();
   const out = ['# Sổ effort', '', `_Tự sinh bởi \`flow.mjs effort\` lúc ${local(now())}. Ghi thêm bằng \`/flow effort <phút> "<việc>"\`._`, '',
     '## Tổng', `- Giờ người: **${(t.humanMin / 60).toFixed(1)} h** (ước tính từ phiên chat ${(t.humanSessionsMin / 60).toFixed(1)} h + ghi tay ${(t.humanLoggedMin / 60).toFixed(1)} h)`,
-    `- Máy: ${fmtTok(t.tokens)} token, ${(t.machineMin / 60).toFixed(1)} h chạy`, ''];
+    `- Máy: ${fmtTok(t.tokens)} token mới (input + ghi cache + output), ${fmtTok(t.cacheRead)} token đọc lại từ cache, ${(t.machineMin / 60).toFixed(1)} h chạy`,
+    '- Token "mới" gần với mức tiêu quota hơn. Đọc cache là mỗi lượt đọc lại toàn bộ ngữ cảnh: rẻ (khoảng 10% giá) nhưng nhân theo độ dài phiên, nên phiên càng dài con số này càng phình. Quota thật xem % 5h trên status line.', ''];
   if (items.length) {
     const doneMd = items.reduce((a, i) => a + i.md * ((e.done[i.item] || 0) / 100), 0);
     const total = items.reduce((a, i) => a + i.md, 0);
@@ -444,8 +447,8 @@ function renderLedger() {
       doneMd ? `Giờ người thực tế / giờ mốc của phần đã đạt: **${(t.humanMin / 60).toFixed(1)} h / ${(doneMd * 8).toFixed(0)} h = ${((t.humanMin / 60) / (doneMd * 8) * 100).toFixed(1)}%**` : 'Chưa có hạng mục nào được đánh dấu đạt (`flow.mjs effort done <#> [phần trăm]`).', '');
   }
   out.push('## Giờ người ghi tay', '| Lúc | Phút | Hạng mục | Việc |', '|---|---:|---|---|', ...e.human.map((h) => `| ${local(h.at)} | ${h.minutes} | ${h.item || ''} | ${h.note} |`), '');
-  out.push('## Phiên Claude Code (tự ghi khi dừng)', '| Phiên | Bước | Model | Token | Giờ người ước tính (phút) | Máy chạy (phút) |', '|---|---|---|---:|---:|---:|',
-    ...Object.entries(e.sessions).map(([id, s]) => `| ${id.slice(0, 8)} | ${s.phase} | ${s.model} | ${fmtTok(s.tokens)} | ${s.humanMin} | ${s.machineMin} |`), '');
+  out.push('## Phiên Claude Code (tự ghi khi dừng)', '| Phiên | Bước | Model | Token mới | Đọc cache | Ngữ cảnh lớn nhất | Giờ người ước tính (phút) | Máy chạy (phút) |', '|---|---|---|---:|---:|---:|---:|---:|',
+    ...Object.entries(e.sessions).map(([id, s]) => `| ${id.slice(0, 8)} | ${s.phase} | ${s.model} | ${fmtTok(s.tokens)} | ${fmtTok(s.cacheRead || 0)} | ${fmtTok(s.peakCtx || 0)} | ${s.humanMin} | ${s.machineMin} |`), '');
   out.push('## Engine khác', '| Lúc | Engine | Token | Việc |', '|---|---|---:|---|', ...e.machine.map((m) => `| ${local(m.at)} | ${m.engine} | ${fmtTok(m.tokens)} | ${m.note} |`), '');
   write(P.ledger, out.join('\n'));
 }
@@ -766,7 +769,25 @@ function resumeReport() {
   for (const i of items) console.log(`- ${i}`);
 }
 
+// ---------- clean: local working files that only agents needed ----------
+function clean() {
+  const days = Number(flag('--days')) || 3;
+  const old = (f) => Date.now() - fs.statSync(f).mtimeMs > days * 86400_000;
+  let n = 0;
+  for (const j of jobFiles()) if (j.status !== 'running' && j.ended && Date.now() - Date.parse(j.ended) > days * 86400_000) {
+    for (const f of [j.log, path.join(P.jobs, `${j.name}.json`)]) if (fs.existsSync(f)) { fs.rmSync(f, { force: true }); n++; }
+  }
+  for (const d of ['work/review-pack', 'work/briefs']) if (fs.existsSync(d)) for (const f of walk(d)) if (old(f)) { fs.rmSync(f, { force: true }); n++; }
+  // screenshots: keep only the newest round per folder
+  for (const d of ['product/ux/shots', 'work/evidence']) {
+    if (!fs.existsSync(d)) continue;
+    const rounds = fs.readdirSync(d, { withFileTypes: true }).filter((x) => x.isDirectory() && /^(round|r)?\d+$/i.test(x.name)).map((x) => x.name).sort();
+    for (const r of rounds.slice(0, -1)) { fs.rmSync(path.join(d, r), { recursive: true, force: true }); n++; }
+  }
+  console.log(`Đã dọn ${n} file/thư mục tạm (cũ hơn ${days} ngày). Không đụng product/, work/slices/, effort, BOARD.`);
+}
+
 // ---------- dispatch (last, so every const above is initialised) ----------
-const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
-if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 22).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, clean, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
+if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 23).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 await commands[cmd]();

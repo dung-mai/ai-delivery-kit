@@ -18,6 +18,7 @@ Arguments: `$ARGUMENTS` (may be empty). Read `work/BOARD.md` and `.flow/state/fl
 | `effort [minutes "note"]` | `flow.mjs effort report`, or `flow.mjs effort log <minutes> "<note>"`. |
 | `pack` | **review-pack** skill. |
 | `resume` | `flow.mjs resume-report`, then handle each item (see Resume). |
+| `autopilot` | Run all remaining slices back to back without stopping (see Autopilot). |
 
 ## Who does what (spread usage)
 Before briefing any specialist, use the **delegate** skill: `roles` in `.flow/config.json` says whether research, ba, architect, ux, qa, build, review, docs go to a Claude subagent, Codex or DeepSeek. Default: Claude for judgement (specs, decisions, architecture, review), Codex for volume (code, tests, UI, docs). The human watches the split in `flow.mjs timeline` and the effort ledger.
@@ -37,6 +38,21 @@ Only sequence what really depends on an output. Never let two writers touch the 
 3. When it returns: read the output and check it against the definition of done. `flow.mjs check`.
 4. Checkpoint: `flow.mjs phase <step>`, commit the outputs (`chore(flow): <step> done`), so an interruption never loses a finished step. For a gate: review pack, ask, then `flow.mjs gate <name> approved "<who>"`.
 5. Tell the human in 1–3 lines: produced (paths), running in background, next, what needs them.
+
+## Autopilot (after the architecture gate)
+For the long build phase, when the human is not watching. Settings in `.flow/config.json` → `autopilot`.
+1. Before starting: dependencies installed, DB up, `flow.mjs doctor` green, all decision cards that block a slice answered or turned into stated assumptions.
+2. For each unticked slice in plan order: build (Codex job per `roles.build`) → verify (reviewer, read-only) → at most 2 fix rounds → commit → tick → `flow.mjs phase <slice>`. While a Codex job runs, prepare the next slice's brief.
+3. A slice that stays blocked (env, spec problem, 2 failed fix rounds) gets a `## Blocked` section in its `work/slices/<slice>.md` (what, why, the exact question) and is skipped; continue with the next slice that does not depend on it.
+4. Do not ask the human anything until the end. Assume, record, continue. Exceptions: destructive actions, secrets, anything the guards block.
+5. Stop when all slices are done or blocked, or Claude 5h usage passes `autopilot.stop_at_5h_percent` (hand the rest to Codex jobs if possible). Then: review pack, one summary for the human (done, blocked with the exact question, assumptions made), and notify.
+With `autopilot.gates: each`, stop after every slice instead.
+
+## Keep each session small
+Every turn re-reads the whole conversation, so a long session costs more per turn and gets slower. The state lives in files, so: after each finished slice or gate, checkpoint, then tell the human "đã checkpoint, có thể /clear" (in autopilot: start the next slice from a short summary, do not re-read finished slices). The Stop hook warns when the context passes `budget.context_k`.
+
+## What to write
+One file per slice (`work/slices/<slice>.md`), specs and decisions in `product/`. No other notes, logs or drafts in the repo; temporary files go to `work/tasks/` (git-ignored) and are removed by `flow.mjs clean`.
 
 ## Usage awareness
 `.flow/state/usage.json` (written by the status line) has the Claude 5-hour usage. Above 60%: move remaining volume work to Codex. Above 85%: finish the current step, checkpoint, and tell the human what Codex can continue alone.
