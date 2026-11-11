@@ -1,6 +1,6 @@
 ---
 name: flow
-description: Entry point of the AI delivery flow. Use when the user types /flow (start, status, next, change, decide, effort, pack, resume) or asks to start, continue or check a piece of work in this repo.
+description: Entry point of the AI delivery flow. Use when the user types /flow (start, status, next, change, explore, decide, questions, effort, pack, resume, autopilot) or asks to start, continue or check a piece of work in this repo.
 ---
 
 # /flow — conduct the delivery flow
@@ -10,11 +10,13 @@ Arguments: `$ARGUMENTS` (may be empty). Read `work/BOARD.md` and `.flow/state/fl
 ## Sub-commands
 | Input | Do |
 |---|---|
-| `"<request>"` or `start "<request>"` | Run the **triage** skill: classify, pick a recipe, show the plan in ≤ 6 lines, ask the human to confirm (one question, options). Then run the first step. |
+| `"<request>"` or `start "<request>"` | Run the **triage** skill (the router): pick the route, show the plan in ≤ 6 lines. quick / bug / feature start right away; epic / change / greenfield ask once to confirm. |
 | `status` (or empty) | `node .flow/sensors/flow.mjs board`, then summarise: recipe, phase, running jobs/subagents, what needs the human, effort and Claude 5h usage. ≤ 8 lines. |
 | `next` | Do the next step(s) of the current recipe until an output exists or a gate/decision needs the human. |
 | `change "<what changed>"` | **change** skill. |
+| `explore "<question>"` | **explore** skill: frame the question, pick the cheapest mode, timebox, finish with a decision card. |
 | `decide` | Open decision cards with options and recommendation; record answers with the **decide** skill. |
+| `questions` | `flow.mjs questions`, then show `product/questions.md` as one message the PO can forward to the client. |
 | `effort [minutes "note"]` | `flow.mjs effort report`, or `flow.mjs effort log <minutes> "<note>"`. |
 | `pack` | **review-pack** skill. |
 | `resume` | `flow.mjs resume-report`, then handle each item (see Resume). |
@@ -31,6 +33,9 @@ Waiting is the biggest cost. Start independent work together and do your own wor
 - build of slice N (Codex job in the background) ‖ you review slice N-1, write its walkthrough, or prepare the brief for slice N+1;
 - qa tests for the next slice ‖ build of the current one.
 Only sequence what really depends on an output. Never let two writers touch the same files.
+
+## Lanes and routes
+Lanes: 1 requirement (discover, define, spec critic) · 2 design (architect, ux-options, plan) · 3 build (build, qa tests, verify) · 4 test (test pack, triage, UAT support). A route says which of their steps run. Explore is not a lane: any step calls it when it meets an unknown, and only that step waits. Gate checklists: `.flow/templates/gates.md`.
 
 ## Step loop
 1. Find the current step in `.flow/recipes/<recipe>.md`; check its inputs exist.

@@ -1,4 +1,6 @@
-# Recipe: change request
+# Route: change request
+
+Lanes: **1** (delta) → only the lanes the impact list names → **3** → **4** (regression).
 
 | # | Step | Output | Gate |
 |---|---|---|---|

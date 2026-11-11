@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// AI Delivery Kit v2 — deterministic helpers for the conductor, the hooks and the humans. No dependencies, Node >= 20.
+// AI Delivery Kit v3 — deterministic helpers for the conductor, the hooks and the humans. No dependencies, Node >= 20.
 //
 //   node .flow/sensors/flow.mjs <command> [...]
 //
@@ -12,6 +12,8 @@
 //   trace [--ids A,B]              requirement id -> tests (and, with --ids, every file that mentions them)
 //   freeze add <paths..> | check | release <path> | list
 //   effort log <minutes> "<note>" [--item X] | machine <engine> <tokens> "<note>" | done <item> [percent] | report
+//   spec-lint [cap]                quality of capability specs (size, Given/When/Then, example types, vague words); exit 1 on errors
+//   questions                      product/questions.md: one client question list from open "ask client" cards
 //   review-pack [--mark-approved] [--no-pdf]
 //   shots <file.html|url> [--out dir] [--name n]   desktop/tablet/mobile screenshots for the UI critique loop
 //   run <name> -- <command>        run a long job (codex, tests…) with a log in work/jobs/, visible in watch/statusline
@@ -127,7 +129,8 @@ function capabilities() {
     const ex = read(path.join(dir, 'examples.md'));
     const title = (spec.match(/^#\s+(.+)$/m) || [])[1] || d.name;
     const code = (title.match(/\(([A-Z]{2,5})\)/) || [])[1] || (idsIn(spec)[0] || '').split('-')[0] || '';
-    const ids = [...new Set(idsIn(spec))];
+    // only ids of this capability count; ids of other capabilities are references
+    const ids = [...new Set(idsIn(spec))].filter((i) => !code || i.startsWith(code + '-'));
     const rules = ids.filter((i) => /-R\d/.test(i));
     const scenarios = ids.filter((i) => /-S\d/.test(i));
     const examples = [];
@@ -159,6 +162,7 @@ function decisions() {
   return out;
 }
 const isOpen = (d) => /^(mở|open)/i.test(d.status);
+const NOT_BLOCKING = /^\s*(không|none|no|-)(?=\s|\(|$)/i;
 function changesList() {
   if (!fs.existsSync(P.changes)) return [];
   return fs.readdirSync(P.changes, { withFileTypes: true }).filter((d) => d.isDirectory() && d.name !== 'archive').map((d) => {
@@ -233,7 +237,7 @@ function board() {
   const caps = coverage();
   const decs = decisions();
   const open = decs.filter(isOpen);
-  const blocking = open.filter((d) => d.blocks && !/^(không|none|-)?$/i.test(d.blocks));
+  const blocking = open.filter((d) => d.blocks && !NOT_BLOCKING.test(d.blocks));
   const ask = open.filter((d) => /ask|hỏi/i.test(d.kind));
   const ch = changesList().filter((c) => !/gộp|merged|từ chối|rejected/i.test(c.status));
   const e = effortTotals();
@@ -297,6 +301,7 @@ function runChecks() {
     }
     const dupEx = c.examples.map((e) => e.id).filter((v, i, a) => a.indexOf(v) !== i);
     if (dupEx.length) issues.push(`${c.dir}/examples.md: mã trùng ${[...new Set(dupEx)].join(', ')}`);
+    for (const e of lintCap(c).errors) issues.push(`${c.dir}: ${e}`);
     const exRules = new Set(c.examples.flatMap((e) => e.rules));
     const noEx = c.rules.filter((r) => !exRules.has(r));
     if (c.examples.length && noEx.length) issues.push(`${c.dir}: luật chưa có ví dụ: ${noEx.join(', ')}`);
@@ -307,7 +312,7 @@ function runChecks() {
   }
   for (const d of decisions()) {
     if (!d.status) issues.push(`${d.file}: thiếu dòng "- Trạng thái:"`);
-    if (isOpen(d) && !d.kind) issues.push(`${d.file}: thẻ mở cần "- Loại:" (assume/research/ask client/spike/defer)`);
+    if (isOpen(d) && !d.kind) issues.push(`${d.file}: thẻ mở cần "- Loại:" (assume/analyze/research/POC/prototype/ask client/defer)`);
   }
   for (const f of frozenProblems()) issues.push(f);
   return issues;
@@ -453,6 +458,113 @@ function renderLedger() {
   write(P.ledger, out.join('\n'));
 }
 
+// ---------- spec quality ----------
+const VAGUE = ['nhanh chóng', 'phù hợp', 'linh hoạt', 'hợp lý', 'tối ưu', 'dễ dùng', 'thân thiện', 'v\\.v', 'etc\\.?', 'appropriate', 'user-friendly', 'as needed', 'khi cần thiết', 'một số', 'nhiều loại', 'tương tự'];
+const VAGUE_RE = new RegExp(`(^|[^\\p{L}])(${VAGUE.join('|')})(?=$|[^\\p{L}])`, 'giu');
+function specRules(text) {
+  // rows of the rules table: { id, when, then }
+  for (const t of mdTables(text)) {
+    const idCol = t.headers.find((h) => /^(mã|id|code)$/i.test(h));
+    if (!idCol || !t.rows.some((r) => /-R\d/.test(r[idCol]))) continue;
+    const whenCol = t.headers.find((h) => /^(khi|when|điều kiện)$/i.test(h));
+    const thenCol = t.headers.find((h) => /^(thì|then|kết quả)$/i.test(h));
+    return t.rows.filter((r) => /-R\d/.test(r[idCol])).map((r) => ({ id: r[idCol].replace(/\*/g, '').trim(), when: r[whenCol] || '', then: r[thenCol] || '' }));
+  }
+  return [];
+}
+function lintCap(c) {
+  const errors = [], warnings = [];
+  const text = c.specText;
+  const lines = text.split('\n').length;
+  if (lines > 300) errors.push(`spec.md dài ${lines} dòng (> 300): tách năng lực`);
+  if (c.rules.length > 25) errors.push(`${c.rules.length} luật (> 25): tách năng lực`);
+  const scen = [...text.matchAll(/^\s*[-*]\s*\*{0,2}([A-Z]{2,5}-S\d{2,3})\*{0,2}(.*)$/gm)];
+  const has = (w, x) => new RegExp(`(^|[^\\p{L}])(${w})(?=$|[^\\p{L}])`, 'iu').test(x);
+  for (const m of scen) if (!(has('given|cho|biết|giả sử', m[2]) && has('when|khi', m[2]) && has('then|thì', m[2]))) errors.push(`${m[1]}: thiếu Given/When/Then`);
+  const known = new Set(c.rules);
+  const exFile = read(path.join(c.dir, 'examples.md'));
+  const tables = mdTables(exFile);
+  const typeCol = tables.flatMap((t) => t.headers).find((h) => /^(loại|type|kind)$/i.test(h));
+  const expCol = tables.flatMap((t) => t.headers).find((h) => /kết quả|expected|mong đợi/i.test(h));
+  const byType = { 'thường': 0, 'biên': 0, 'âm': 0, 'tổ hợp': 0, '?': 0 };
+  const typesByRule = new Map();
+  for (const e of c.examples) {
+    for (const r of e.rules) if (!known.has(r)) errors.push(`${e.id} nhắc ${r} nhưng spec không có luật này`);
+    if (expCol && !String(e.row[expCol] || '').trim()) errors.push(`${e.id}: trống cột "${expCol}"`);
+    const ty = typeCol ? String(e.row[typeCol] || '').trim().toLowerCase() : '?';
+    const k = /biên|boundary/.test(ty) ? 'biên' : /âm|negative/.test(ty) ? 'âm' : /tổ hợp|combo|combination/.test(ty) ? 'tổ hợp' : /thường|normal|happy/.test(ty) ? 'thường' : '?';
+    byType[k]++;
+    for (const r of e.rules) { if (!typesByRule.has(r)) typesByRule.set(r, new Set()); typesByRule.get(r).add(k); }
+  }
+  if (c.examples.length && !typeCol) warnings.push('examples.md chưa có cột "Loại" (thường / biên / âm / tổ hợp)');
+  for (const r of specRules(text)) {
+    const kinds = typesByRule.get(r.id) || new Set();
+    if (/\d|≥|≤|>=|<=|<|>|từ .* đến|tối đa|tối thiểu|at least|at most/i.test(r.when) && typeCol && !kinds.has('biên')) warnings.push(`${r.id}: có giới hạn số nhưng chưa có ví dụ "biên"`);
+    if (/không (được|cho|áp|đủ điều kiện|có hiệu lực)|từ chối|chặn|bị khoá|reject|not allowed|must not|is not applied/i.test(r.then) && typeCol && !kinds.has('âm')) warnings.push(`${r.id}: luật cấm/từ chối nhưng chưa có ví dụ "âm"`);
+  }
+  if (c.rules.length >= 3 && typeCol && !byType['tổ hợp']) warnings.push('chưa có ví dụ "tổ hợp" (hai luật gặp nhau)');
+  const prose = text.replace(/```[\s\S]*?```/g, '');
+  const vague = [...new Set([...prose.matchAll(VAGUE_RE)].map((m) => m[2].toLowerCase()))];
+  if (vague.length) warnings.push(`từ mơ hồ: ${vague.join(', ')}`);
+  const tbd = (text.match(/\bTBD\b|\bTODO\b|\?\?/g) || []).length;
+  if (tbd) warnings.push(`${tbd} chỗ TBD/TODO/??: chuyển thành Giả định hoặc Câu hỏi mở (thẻ D-xx)`);
+  const cards = new Set(decisions().map((d) => (d.title.match(/^D-\d+/) || [])[0]).filter(Boolean));
+  const refs = [...new Set([...text.matchAll(/\bD-\d{2,3}\b/g)].map((m) => m[0]))];
+  const missing = refs.filter((r) => !cards.has(r));
+  if (missing.length) errors.push(`nhắc thẻ chưa tồn tại: ${missing.join(', ')}`);
+  const section = (name) => (text.split(new RegExp(`^##\\s+${name}.*$`, 'mi'))[1] || '').split(/^##\s/m)[0];
+  const assumptions = (section('Giả định').match(/^\s*[-*]\s+\S/gm) || []).length;
+  const questions = (section('Câu hỏi mở').match(/^\s*[-*]\s+\S/gm) || []).length;
+  return { errors, warnings, stats: { lines, rules: c.rules.length, scenarios: c.scenarios.length, examples: c.examples.length, byType, assumptions, questions } };
+}
+function specLint() {
+  const only = args[0];
+  const caps = capabilities().filter((c) => !only || c.slug === only || c.code === only);
+  if (!caps.length) die(only ? `Không thấy năng lực ${only}` : 'Chưa có spec nào trong product/specs/');
+  const report = [];
+  let errs = 0;
+  for (const c of caps) {
+    const r = lintCap(c);
+    errs += r.errors.length;
+    report.push({ cap: c.code, slug: c.slug, ...r });
+    const t = r.stats.byType;
+    console.log(`\n${c.code || c.slug} · ${r.stats.rules} luật · ${r.stats.scenarios} kịch bản · ${r.stats.examples} ví dụ (thường ${t['thường']}, biên ${t['biên']}, âm ${t['âm']}, tổ hợp ${t['tổ hợp']}${t['?'] ? `, chưa phân loại ${t['?']}` : ''}) · ${r.stats.assumptions} giả định · ${r.stats.questions} câu hỏi mở · ${r.stats.lines} dòng`);
+    for (const e of r.errors) console.log(`  ✗ ${e}`);
+    for (const w of r.warnings) console.log(`  ! ${w}`);
+    if (!r.errors.length && !r.warnings.length) console.log('  ✓ sạch');
+  }
+  writeJson('.flow/state/spec-lint.json', { at: now(), report });
+  console.log(`\nspec-lint: ${errs} lỗi, ${report.reduce((a, r) => a + r.warnings.length, 0)} cảnh báo`);
+  if (errs) process.exit(1);
+}
+
+// ---------- client question list ----------
+function cardDetails(file) {
+  const t = read(file);
+  const field = (k) => (t.match(new RegExp(`^-\\s*${k}\\s*:\\s*(.*)$`, 'mi')) || [])[1]?.trim() || '';
+  const sec = (name) => ((t.split(new RegExp(`^##\\s+${name}.*$`, 'mi'))[1] || '').split(/^##\s/m)[0]).trim();
+  const options = [...sec('Phương án').matchAll(/^\s*[-*]\s*\*\*([A-Z])\.?\*\*\s*(.*)$/gm)].map((m) => `${m[1]}. ${m[2].split(/Hệ quả\s*:/i)[0].trim().replace(/[.;,]$/, '')}`);
+  const rec = sec('Khuyến nghị').split('\n')[0].trim();
+  return { title: (t.match(/^#\s+(.+)$/m) || [])[1] || path.basename(file), options, rec, dflt: field('Mặc định đang dùng') || field('Mặc định'), blocks: field('Chặn'), affects: field('Ảnh hưởng'), who: field('Người quyết') };
+}
+function questions() {
+  const open = decisions().filter((d) => isOpen(d) && /ask|hỏi/i.test(d.kind));
+  const rows = open.map((d) => ({ ...cardDetails(d.file), file: d.file }));
+  const blocking = (r) => r.blocks && !NOT_BLOCKING.test(r.blocks);
+  rows.sort((a, b) => Number(blocking(b)) - Number(blocking(a)));
+  const out = ['# Câu hỏi cho khách', '', `> Tự sinh bởi \`flow.mjs questions\` lúc ${local(now())} từ các thẻ quyết định loại "ask client". Không sửa tay: sửa thẻ D-xx.`, '',
+    rows.length ? `${rows.length} câu, ${rows.filter(blocking).length} câu đang chặn việc. Mỗi câu có phương án và đề xuất của chúng tôi; khách chỉ cần chọn hoặc sửa. Khi chưa trả lời, đội làm tiếp theo cột "Đang dùng tạm".` : 'Không có câu hỏi nào đang mở.', ''];
+  rows.forEach((r, i) => {
+    out.push(`## ${i + 1}. ${r.title.replace(/^D-\d+\s*·\s*/, '')}`, '', `- Thẻ: \`${r.file}\`${r.affects ? ` · Ảnh hưởng: ${r.affects}` : ''}${blocking(r) ? ` · **Đang chặn:** ${r.blocks}` : ''}`);
+    for (const o of r.options) out.push(`- ${o}`);
+    if (r.rec) out.push(`- **Đề xuất:** ${r.rec}`);
+    if (r.dflt) out.push(`- **Đang dùng tạm:** ${r.dflt}`);
+    out.push('');
+  });
+  write('product/questions.md', out.join('\n'));
+  console.log(`Wrote product/questions.md (${rows.length} câu)`);
+}
+
 // ---------- review pack ----------
 async function reviewPack() {
   const approved = readJson(P.approved, null);
@@ -472,8 +584,8 @@ async function reviewPack() {
   }
   const order = [];
   const add = (f, group) => { if (fs.existsSync(f) && !order.some((o) => o.f === f)) order.push({ f, group }); };
-  add('product/map.md', 'Tổng quan'); add('product/context.md', 'Tổng quan');
-  for (const c of capabilities()) { add(path.join(c.dir, 'spec.md'), 'Spec'); add(path.join(c.dir, 'examples.md'), 'Spec'); }
+  add('product/map.md', 'Tổng quan'); add('product/questions.md', 'Tổng quan'); add('product/context.md', 'Tổng quan');
+  for (const c of capabilities()) { add(path.join(c.dir, 'examples.md'), 'Spec'); add(path.join(c.dir, 'spec.md'), 'Spec'); }
   const decs = decisions().sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)));
   for (const d of decs) add(d.file, 'Quyết định');
   for (const c of changesList()) for (const f of ['proposal.md', 'delta.md', 'change.md']) add(path.join(P.changes, c.name, f), 'Thay đổi');
@@ -484,6 +596,8 @@ async function reviewPack() {
   const caps = coverage();
   const open = decs.filter(isOpen);
   const exTotal = caps.reduce((a, c) => a + c.examples.length, 0);
+  const lint = caps.map((c) => ({ c, r: lintCap(c) }));
+  const lintHtml = lint.length ? `<table><thead><tr><th>Năng lực</th><th>Luật</th><th>Ví dụ (thường / biên / âm / tổ hợp)</th><th>Giả định</th><th>Câu hỏi mở</th><th>Lỗi</th><th>Cảnh báo</th></tr></thead><tbody>${lint.map(({ c, r }) => `<tr><td>${esc(c.title)}</td><td>${r.stats.rules}</td><td>${r.stats.examples} (${r.stats.byType['thường']} / ${r.stats.byType['biên']} / ${r.stats.byType['âm']} / ${r.stats.byType['tổ hợp']})</td><td>${r.stats.assumptions}</td><td>${r.stats.questions}</td><td>${r.errors.length}</td><td>${r.warnings.length ? esc(r.warnings.join('; ')) : '0'}</td></tr>`).join('')}</tbody></table>` : '';
   const sections = order.map(({ f, group }, i) => ({ id: `s${i}`, f: rel(f), group, title: (read(f).match(/^#\s+(.+)$/m) || [])[1] || rel(f), html: md2html(read(f)), changed: changed.has(rel(f)) }));
   const nav = [...new Set(sections.map((s) => s.group))].map((g) => `<div class="g">${esc(g)}</div>` + sections.filter((s) => s.group === g).map((s) => `<a href="#${s.id}">${s.changed ? '<b class="new">mới</b> ' : ''}${esc(s.title)}</a>`).join('')).join('');
   const uxIndex = fs.existsSync('product/ux/options/index.html') ? '<p>Phương án UI: <a href="../../product/ux/options/index.html">product/ux/options/index.html</a></p>' : '';
@@ -492,7 +606,7 @@ async function reviewPack() {
 <header><h1>Review pack · ${esc(cfg.project || path.basename(base))}</h1>
 <p class="meta">Sinh lúc ${esc(local(now()))}${approved ? ` · phần <b class="new">mới</b> là thay đổi sau lần duyệt ${esc(local(approved.at))}` : ' · lần đầu, chưa có mốc duyệt'}</p>
 <div class="cards"><div><b>${caps.length}</b>năng lực có spec</div><div><b>${exTotal}</b>ví dụ cần kiểm</div><div><b>${open.length}</b>quyết định đang mở</div><div><b>${changed.size}</b>file đổi từ lần duyệt trước</div></div>
-<p class="hint">Cách đọc: xem <i>Bản đồ sản phẩm</i>, rồi bảng <i>Ví dụ</i> của từng năng lực (sai dòng nào ghi lại mã dòng đó), rồi các <i>Quyết định</i> đang mở.</p>${uxIndex}</header>
+<p class="hint">Cách đọc: xem <i>Bản đồ sản phẩm</i> và <i>Câu hỏi cho khách</i>, rồi bảng <i>Ví dụ</i> của từng năng lực trước phần luật (sai dòng nào ghi lại mã dòng đó), rồi các <i>Quyết định</i> đang mở. Checklist cổng: <code>.flow/templates/gates.md</code>.</p>${lintHtml ? `<h3>Chất lượng spec (spec-lint)</h3>${lintHtml}` : ''}${uxIndex}</header>
 ${sections.map((s) => `<section id="${s.id}" class="${s.changed ? 'changed' : ''}"><div class="path">${esc(s.f)}${s.changed ? ' · <b class="new">mới / đổi</b>' : ''}</div>${s.html}</section>`).join('\n')}
 </main><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true});</script></body></html>`;
   write('work/review-pack/index.html', html);
@@ -569,8 +683,8 @@ section{border-top:1px solid var(--line);padding:18px 0}section.changed{border-l
 h2{font-size:21px;margin:6px 0 8px}h3{font-size:17px;margin:16px 0 6px}h4{font-size:15px}
 table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:14px}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:var(--soft)}tr:nth-child(even) td{background:#fbfcfe}
 code{background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.9em}pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto}pre.mermaid{background:#fff;text-align:center}
-.id{font:600 12px ui-monospace,monospace;background:#eef3ff;color:#1f4fc4;border-radius:5px;padding:0 5px}li.d1{margin-left:22px}blockquote{border-left:3px solid var(--line);margin:8px 0;padding:2px 12px;color:var(--muted)}
-@media print{nav{display:none}main{padding:0;max-width:none}section{break-inside:auto}table,pre{break-inside:avoid}}
+.id{font:600 12px ui-monospace,monospace;background:#eef3ff;color:#1f4fc4;border-radius:5px;padding:0 5px;white-space:nowrap}li.d1{margin-left:22px}blockquote{border-left:3px solid var(--line);margin:8px 0;padding:2px 12px;color:var(--muted)}
+@media print{nav{display:none}main{padding:0;max-width:none}section{break-inside:auto}pre{break-inside:avoid}tr{break-inside:avoid}h2,h3,h4{break-after:avoid}}
 @media (max-width:800px){body{display:block}nav{position:static;height:auto;width:auto}main{padding:16px}.cards{grid-template-columns:repeat(2,1fr)}}`;
 
 function die(m) { console.error(m); process.exit(1); }
@@ -788,6 +902,6 @@ function clean() {
 }
 
 // ---------- dispatch (last, so every const above is initialised) ----------
-const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, clean, 'review-pack': reviewPack, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
-if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 23).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, clean, 'review-pack': reviewPack, 'spec-lint': specLint, questions, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
+if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 25).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 await commands[cmd]();

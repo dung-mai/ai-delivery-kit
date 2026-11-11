@@ -12,4 +12,4 @@ flow(base, 'board');
 const board = (() => { try { return fs.readFileSync(path.join(base, 'work', 'BOARD.md'), 'utf8'); } catch { return ''; } })();
 const top = board.split('\n').slice(0, 40).join('\n');
 const interrupted = (rr.stdout || '').includes('Bị dừng giữa chừng') ? `\n\n${rr.stdout.trim()}\nHandle these first (see the flow skill, "resume").` : '';
-process.stdout.write(`AI Delivery Kit v2 is active in ${base}. Current board (work/BOARD.md):\n\n${top}${interrupted}\n\nUse the flow skill (/flow) to continue.\n`);
+process.stdout.write(`AI Delivery Kit v3 is active in ${base}. Current board (work/BOARD.md):\n\n${top}${interrupted}\n\nUse the flow skill (/flow) to continue.\n`);

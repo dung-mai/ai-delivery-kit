@@ -1,9 +1,18 @@
-# AI Delivery Kit v2
+# AI Delivery Kit v3
 
 Bộ framework giao việc phần mềm cho AI agent, dùng lại được giữa các dự án. Claude Code điều phối; bạn nói chuyện bình thường hoặc gõ `/flow`; script chỉ giữ luật cứng.
 
 - `kit/` — framework, cài vào dự án bằng `install.mjs`.
 - `pos/` — bài thử đầu tiên: POS greenfield trong khoảng 1 tuần. Mốc effort đã chốt trước khi làm: `pos/product/baseline-effort.md`.
+- `examples/pos-promotions/` — mẫu đầu ra lane Requirement (v3) cho epic Khuyến mại: context có "nguồn chưa nói", bản đồ, 2 spec + 41 ví dụ, 8 thẻ quyết định, danh sách câu hỏi cho khách, knowledge seed, review pack.
+
+## v3: router + 4 lane
+
+- **Lane** = ai sở hữu loại việc, có những bước nào, ai ký: 1 Requirement · 2 Design · 3 Build · 4 Test. **Route** = việc này chạy những bước nào: `quick`, `bug`, `change`, `feature`, `epic`, `explore`, `greenfield` (`.flow/recipes/`). Skill `triage` là router; conductor chạy một mạch, chỉ dừng ở cổng của route đó.
+- **Explore không phải lane**: bước nào gặp điều chưa biết thì gọi skill `explore` (assume · analyze · research · POC · prototype · hỏi khách), có hạn giờ, luôn kết thúc bằng thẻ quyết định; chỉ bước cần câu trả lời phải chờ.
+- **Lane Requirement làm kỹ**: `discover` kiểm kê nguồn và ghi rõ "nguồn chưa nói"; `define` viết spec theo template mới (vai trò, luật, kịch bản gắn `[auto|semi|manual]`, màn hình và trường, điểm chạm, biến thể, giả định, câu hỏi mở) và bảng ví dụ có cột `Loại` (thường / biên / âm / tổ hợp); agent `spec-critic` soi độc lập; `flow.mjs spec-lint` chấm (kích thước, Given/When/Then, luật số không có ví dụ biên, luật cấm không có ví dụ âm, từ mơ hồ, thẻ không tồn tại); `flow.mjs questions` gom câu hỏi cho khách thành một danh sách có phương án, đề xuất và mặc định đang dùng.
+- **knowledge/**: kho tri thức nhỏ, có nguồn, lớn dần theo dùng (skill `knowledge`).
+- Checklist từng cổng: `.flow/templates/gates.md`.
 
 ## Cài vào một dự án
 
@@ -23,7 +32,9 @@ Mở Claude Code trong thư mục dự án (terminal, VS Code extension hoặc a
 | `/flow "Làm POS từ tài liệu trong product/source"` | Phân loại việc, chọn công thức, in kế hoạch, hỏi bạn chốt |
 | `/flow` hoặc `/flow status` | Đang ở đâu, cái gì chờ bạn, đã tốn bao nhiêu |
 | `/flow next` | Làm bước kế, dừng ở chỗ cần bạn |
+| `/flow explore "…"` | Câu hỏi chưa biết: chọn cách rẻ nhất (research, POC, prototype, hỏi khách…), có hạn giờ, ra thẻ quyết định |
 | `/flow decide` | Các thẻ quyết định đang mở, kèm phương án và khuyến nghị |
+| `/flow questions` | Danh sách câu hỏi cho khách, gửi được ngay |
 | `/flow change "khách muốn …"` | Change request: chỉ ghi phần đổi, chỉ ra ảnh hưởng, làm phần chênh lệch |
 | `/flow pack` | Bộ tài liệu HTML/PDF cho BA/khách đọc, tô phần mới |
 | `/flow effort 30 "họp với BA"` | Ghi giờ người làm ngoài chat |
@@ -35,13 +46,14 @@ Hoặc cứ nói tự nhiên: "build đang lỗi quyền git, xử lý đi", "ch
 | Phần | Ở đâu | Vai trò |
 |---|---|---|
 | Conductor | `CLAUDE.md`, skill `flow` | Phiên chính: đọc trạng thái, chọn công thức, giao việc, hỏi bạn ở điểm quyết định |
-| Chuyên gia | `.claude/agents/` | researcher, ba, architect, ux, qa, reviewer: mỗi vai một ngữ cảnh, tool giới hạn |
-| Khối | `.claude/skills/` | triage, discover, research, define, decide, ux-options, architect, plan, conventions, build, build-codex, verify, change, review-pack, retro |
-| Công thức | `.flow/recipes/` | greenfield, feature, change, bug, spike, research |
+| Chuyên gia | `.claude/agents/` | researcher, ba, spec-critic, architect, ux, qa, reviewer: mỗi vai một ngữ cảnh, tool giới hạn |
+| Khối | `.claude/skills/` | triage (router), discover, define, explore, research, decide, knowledge, ux-options, architect, plan, conventions, build, build-codex, delegate, verify, change, review-pack, retro |
+| Route | `.flow/recipes/` | quick, bug, change, feature, epic, explore, greenfield |
 | Template | `.flow/templates/` | bối cảnh, bản đồ, spec, bảng ví dụ, thẻ quyết định, research, kiến trúc, ADR, slice, change, review |
 | Guard | `.flow/hooks/` | chặn sửa file đã chốt và `.env`, chặn lệnh nguy hiểm, format/lint file vừa sửa, chạy check khi dừng, đo token và giờ người, thông báo |
-| Sensor | `.flow/sensors/flow.mjs` | board, check, examples, trace, freeze, effort, review-pack, shots |
-| Sự thật sản phẩm | `product/` | context, map, specs, decisions, changes, research, ux, architecture, plan |
+| Sensor | `.flow/sensors/flow.mjs` | board, check, spec-lint, questions, examples, trace, freeze, effort, review-pack, shots, run, watch, doctor |
+| Sự thật sản phẩm | `product/` | context, map, specs, decisions, questions, changes, research, ux, architecture, plan |
+| Tri thức | `knowledge/` | domain, law, hard-cases, integrations, glossary |
 | Trạng thái | `work/`, `.flow/state/` | BOARD.md, sổ effort, review, bằng chứng |
 
 ## 12 pattern

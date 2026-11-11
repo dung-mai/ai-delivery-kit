@@ -1,4 +1,4 @@
-// Shared helpers for the Claude Code hooks of AI Delivery Kit v2. No dependencies.
+// Shared helpers for the Claude Code hooks of AI Delivery Kit v3. No dependencies.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

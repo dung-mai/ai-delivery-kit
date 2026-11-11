@@ -1,21 +1,23 @@
 ---
 name: discover
-description: Greenfield and large features. Builds the shared understanding before specs: goals, users, scope candidates, constraints, unknowns, and what a successful demo looks like. Use right after triage for greenfield or L-sized work.
+description: Lane 1, first half, for epics and greenfield. Reads every source, builds shared understanding before specs - goals, roles, capability map with depth, variations, integrations, unknowns - and says what the sources do not say. Use right after triage for epic or greenfield work.
 ---
 
 # Discover
 
-Delegate to the **ba** subagent with the researcher available for facts.
+Delegate to the **ba** subagent; researchers available for facts. Check `knowledge/` first.
 
 ## Inputs
-`product/source/*`, `product/context.md`, triage notes.
+`product/source/*` (masked: no real client personal data), `product/context.md`, `knowledge/`, triage notes.
 
 ## Steps
-1. Fill `product/context.md`: goal, success measures, users and roles, constraints (time, tech, legal), glossary of domain words (one line each).
-2. Draft `product/map.md` from the template: capabilities as rows, each with a one-line purpose, a depth for this iteration (`sâu` / `vừa` / `giả lập` / `ngoài phạm vi`) and the main risk.
-3. Write the demo script: 3–6 steps a stakeholder will watch at the end. This is the acceptance test of the whole iteration.
-4. Collect unknowns into `product/decisions/` as draft cards (status `mở`) using the decide skill's classes. Mark which ones block define.
-5. Identify research questions (how do other systems do X, what is the standard for Y) and hand them to the research skill.
+1. **Source inventory** in `product/context.md` → `## Nguồn`: one line per source (what it covers, how reliable: đã ký / đề xuất / ghi chú họp), then **what the sources do not say** for this scope. That gap list is the most valuable output of discover.
+2. Context: goal, success measures, roles and what each may / may not do, constraints (time, tech, law), glossary (TH / EN / VI terms when the client is not Vietnamese).
+3. **Variation axes**: what differs by store, branch, channel, terminal type, customer group, time. Each axis becomes a column in later example tables.
+4. **Touchpoints**: integrations, devices, documents (receipts, tax invoices) the scope touches, one line each with direction and owner.
+5. `product/map.md`: capabilities with a one-line purpose, depth this iteration (`sâu` / `vừa` / `giả lập` / `ngoài phạm vi`), main risk, and for an epic the proposed split into features.
+6. Unknowns → draft cards with an explore mode each (explore skill); mark which block define. Run `flow.mjs questions`.
+7. Demo script: 3–6 steps a stakeholder will watch at the end.
 
 ## Done when
-Map, context and demo script exist; every capability has a depth; every blocking unknown is a card. Gate **scope**: the human approves the map + demo script.
+Every source is inventoried with its gaps; every capability has a depth; variation axes and touchpoints are listed; every blocking unknown is a card. For greenfield, gate **scope**: the human approves map + demo script.

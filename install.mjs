@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Install or update AI Delivery Kit v2 into a project folder.
+// Install or update AI Delivery Kit v3 into a project folder.
 //
 //   node install.mjs <target-folder> [--project <name>] [--update]
 //
@@ -39,7 +39,7 @@ fs.mkdirSync(dst, { recursive: true });
 if (update) {
   for (const p of FRAMEWORK) { fs.rmSync(path.join(dst, p), { recursive: true, force: true }); copy(path.join(kit, p), path.join(dst, p), true); }
   for (const p of KEEP_IF_EXISTS) copy(path.join(kit, p), path.join(dst, p), false);
-  for (const p of ['product', 'work']) copy(path.join(kit, p), path.join(dst, p), false); // only adds missing skeleton files
+  for (const p of ['product', 'work', 'knowledge']) copy(path.join(kit, p), path.join(dst, p), false); // only adds missing skeleton files
   // new settings in the kit's config are added to the project's config; existing values are never changed
   const cf = path.join(dst, '.flow', 'config.json');
   const mine = JSON.parse(fs.readFileSync(cf, 'utf8'));
@@ -75,5 +75,5 @@ const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
 const add = want.filter((l) => !cur.split('\n').includes(l));
 if (add.length) fs.appendFileSync(gi, (cur && !cur.endsWith('\n') ? '\n' : '') + add.join('\n') + '\n');
 
-console.log(`${update ? 'Updated' : 'Installed'} AI Delivery Kit v2 in ${dst}: ${copied} file copied, ${kept} kept.`);
+console.log(`${update ? 'Updated' : 'Installed'} AI Delivery Kit v3 in ${dst}: ${copied} file copied, ${kept} kept.`);
 console.log('Next: open Claude Code in that folder and type  /flow "<what you want to build>"');

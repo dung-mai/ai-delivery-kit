@@ -10,7 +10,8 @@
     "build": "codex",
     "review": "claude",
     "docs": "codex",
-    "_note": "Who does each role: claude | codex | deepseek. review must differ from build. Machine-specific overrides (e.g. deepseek at home only) go in .flow/config.local.json, which is git-ignored."
+    "critic": "claude",
+    "_note": "Who does each role: claude | codex | deepseek. review must differ from build. Machine-specific overrides (e.g. deepseek at home only) go in .flow/config.local.json, which is git-ignored. critic (spec-critic) must differ from the engine that wrote the spec when possible."
   },
   "codex": {
     "args": [
@@ -34,7 +35,8 @@
     "architect": "opus",
     "ux": "sonnet",
     "qa": "sonnet",
-    "reviewer": "sonnet"
+    "reviewer": "sonnet",
+    "spec-critic": "sonnet"
   },
   "budget": {
     "context_k": 120,
