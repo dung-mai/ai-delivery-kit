@@ -1,0 +1,284 @@
+{
+  "capability": "PRM",
+  "source": "product/specs/promotion-definition/examples.md",
+  "generated": "2026-11-11T07:14:44.872Z",
+  "examples": [
+    {
+      "id": "PRM-EX-01",
+      "rules": [
+        "PRM-R02"
+      ],
+      "Mã": "PRM-EX-01",
+      "Luật": "PRM-R02",
+      "Loại": "thường",
+      "Đầu vào": "Khuyến mại 01/12 00:00 → 01/01 00:00; bấm tổng 15/12 10:00",
+      "Kết quả mong đợi": "đủ điều kiện",
+      "Vì sao": "nằm trong khung"
+    },
+    {
+      "id": "PRM-EX-02",
+      "rules": [
+        "PRM-R02"
+      ],
+      "Mã": "PRM-EX-02",
+      "Luật": "PRM-R02",
+      "Loại": "biên",
+      "Đầu vào": "cùng khuyến mại; bấm tổng 01/12 00:00:00",
+      "Kết quả mong đợi": "đủ điều kiện",
+      "Vì sao": "bắt đầu được tính"
+    },
+    {
+      "id": "PRM-EX-03",
+      "rules": [
+        "PRM-R02"
+      ],
+      "Mã": "PRM-EX-03",
+      "Luật": "PRM-R02",
+      "Loại": "biên",
+      "Đầu vào": "cùng khuyến mại; bấm tổng 01/01 00:00:00",
+      "Kết quả mong đợi": "không đủ điều kiện",
+      "Vì sao": "kết thúc không tính"
+    },
+    {
+      "id": "PRM-EX-04",
+      "rules": [
+        "PRM-R03"
+      ],
+      "Mã": "PRM-EX-04",
+      "Luật": "PRM-R03",
+      "Loại": "âm",
+      "Đầu vào": "cửa hàng [S01, S02]; máy ở S03",
+      "Kết quả mong đợi": "không đủ điều kiện",
+      "Vì sao": "S03 ngoài danh sách"
+    },
+    {
+      "id": "PRM-EX-05",
+      "rules": [
+        "PRM-R03"
+      ],
+      "Mã": "PRM-EX-05",
+      "Luật": "PRM-R03",
+      "Loại": "thường",
+      "Đầu vào": "danh sách cửa hàng rỗng; máy ở S03",
+      "Kết quả mong đợi": "đủ điều kiện",
+      "Vì sao": "rỗng = mọi cửa hàng"
+    },
+    {
+      "id": "PRM-EX-06",
+      "rules": [
+        "PRM-R04"
+      ],
+      "Mã": "PRM-EX-06",
+      "Luật": "PRM-R04",
+      "Loại": "âm",
+      "Đầu vào": "chỉ thành viên; khách chưa nhận diện",
+      "Kết quả mong đợi": "không đủ điều kiện",
+      "Vì sao": ""
+    },
+    {
+      "id": "PRM-EX-07",
+      "rules": [
+        "PRM-R04"
+      ],
+      "Mã": "PRM-EX-07",
+      "Luật": "PRM-R04",
+      "Loại": "thường",
+      "Đầu vào": "chỉ thành viên; đã nhận diện thành viên",
+      "Kết quả mong đợi": "đủ điều kiện",
+      "Vì sao": ""
+    },
+    {
+      "id": "PRM-EX-08",
+      "rules": [
+        "PRM-R05"
+      ],
+      "Mã": "PRM-EX-08",
+      "Luật": "PRM-R05",
+      "Loại": "tổ hợp",
+      "Đầu vào": "phạm vi: ngành Đồ uống; loại trừ: Cola; giỏ: Cola, Sữa",
+      "Kết quả mong đợi": "Sữa trong phạm vi, Cola ngoài",
+      "Vì sao": "loại trừ thắng"
+    },
+    {
+      "id": "PRM-EX-09",
+      "rules": [
+        "PRM-R06"
+      ],
+      "Mã": "PRM-EX-09",
+      "Luật": "PRM-R06",
+      "Loại": "biên",
+      "Đầu vào": "ngưỡng 500,00 THB; tiền tính ngưỡng 500,00",
+      "Kết quả mong đợi": "đủ điều kiện",
+      "Vì sao": "500,00 ≥ 500,00"
+    },
+    {
+      "id": "PRM-EX-10",
+      "rules": [
+        "PRM-R06"
+      ],
+      "Mã": "PRM-EX-10",
+      "Luật": "PRM-R06",
+      "Loại": "biên",
+      "Đầu vào": "ngưỡng 500,00 THB; tiền tính ngưỡng 499,99",
+      "Kết quả mong đợi": "không đủ điều kiện",
+      "Vì sao": "499,99 < 500,00"
+    },
+    {
+      "id": "PRM-EX-11",
+      "rules": [
+        "PRM-R07"
+      ],
+      "Mã": "PRM-EX-11",
+      "Luật": "PRM-R07",
+      "Loại": "thường",
+      "Đầu vào": "Cola mua 2 tặng 1; 7 lon; không giới hạn",
+      "Kết quả mong đợi": "áp 2 lần: tặng 2 lon (giảm 40,00)",
+      "Vì sao": "floor(7 / 3) = 2"
+    },
+    {
+      "id": "PRM-EX-12",
+      "rules": [
+        "PRM-R07"
+      ],
+      "Mã": "PRM-EX-12",
+      "Luật": "PRM-R07",
+      "Loại": "biên",
+      "Đầu vào": "Cola mua 2 tặng 1; 7 lon; tối đa 1 lần / giao dịch",
+      "Kết quả mong đợi": "áp 1 lần: giảm 20,00",
+      "Vì sao": "giới hạn 1"
+    },
+    {
+      "id": "PRM-EX-13",
+      "rules": [
+        "PRM-R07"
+      ],
+      "Mã": "PRM-EX-13",
+      "Luật": "PRM-R07",
+      "Loại": "biên",
+      "Đầu vào": "Cola mua 2 tặng 1; 2 lon",
+      "Kết quả mong đợi": "không áp",
+      "Vì sao": "floor(2 / 3) = 0"
+    },
+    {
+      "id": "PRM-EX-14",
+      "rules": [
+        "PRM-R08"
+      ],
+      "Mã": "PRM-EX-14",
+      "Luật": "PRM-R08",
+      "Loại": "âm",
+      "Đầu vào": "khuyến mại Chờ duyệt",
+      "Kết quả mong đợi": "không có trên máy POS, không áp",
+      "Vì sao": "chỉ Đã duyệt được gửi xuống"
+    },
+    {
+      "id": "PRM-EX-15",
+      "rules": [
+        "PRM-R08"
+      ],
+      "Mã": "PRM-EX-15",
+      "Luật": "PRM-R08",
+      "Loại": "âm",
+      "Đầu vào": "người tạo = người duyệt",
+      "Kết quả mong đợi": "từ chối thao tác duyệt",
+      "Vì sao": "D-05"
+    },
+    {
+      "id": "PRM-EX-16",
+      "rules": [
+        "PRM-R09"
+      ],
+      "Mã": "PRM-EX-16",
+      "Luật": "PRM-R09",
+      "Loại": "thường",
+      "Đầu vào": "phiên bản 1 đang chạy (−10%), phiên bản 2 (−15%) Chờ duyệt; bán 1 Dầu gội",
+      "Kết quả mong đợi": "giảm 15,90; giao dịch ghi phiên bản 1",
+      "Vì sao": "159,00 × 10%"
+    },
+    {
+      "id": "PRM-EX-17",
+      "rules": [
+        "PRM-R10"
+      ],
+      "Mã": "PRM-EX-17",
+      "Luật": "PRM-R10",
+      "Loại": "biên",
+      "Đầu vào": "Snack 35,00; giảm 40,00 THB theo món",
+      "Kết quả mong đợi": "giảm 35,00; giá sau giảm 0,00",
+      "Vì sao": "không âm"
+    },
+    {
+      "id": "PRM-EX-18",
+      "rules": [
+        "PRM-R11"
+      ],
+      "Mã": "PRM-EX-18",
+      "Luật": "PRM-R11",
+      "Loại": "biên",
+      "Đầu vào": "giảm 20%, tối đa 100,00; dòng 600,00",
+      "Kết quả mong đợi": "giảm 100,00",
+      "Vì sao": "20% = 120,00 > 100,00"
+    },
+    {
+      "id": "PRM-EX-19",
+      "rules": [
+        "PRM-R01"
+      ],
+      "Mã": "PRM-EX-19",
+      "Luật": "PRM-R01",
+      "Loại": "thường",
+      "Đầu vào": "giảm % theo món: Dầu gội −10%",
+      "Kết quả mong đợi": "giảm 15,90; còn 143,10",
+      "Vì sao": "159,00 × 10%"
+    },
+    {
+      "id": "PRM-EX-20",
+      "rules": [
+        "PRM-R01"
+      ],
+      "Mã": "PRM-EX-20",
+      "Luật": "PRM-R01",
+      "Loại": "thường",
+      "Đầu vào": "giá đặc biệt: Gạo 169,00",
+      "Kết quả mong đợi": "giảm 20,00",
+      "Vì sao": "189,00 − 169,00"
+    },
+    {
+      "id": "PRM-EX-21",
+      "rules": [
+        "PRM-R01"
+      ],
+      "Mã": "PRM-EX-21",
+      "Luật": "PRM-R01",
+      "Loại": "tổ hợp",
+      "Đầu vào": "combo Snack + Cola giá 49,00",
+      "Kết quả mong đợi": "giảm 6,00, chia: Snack 3,82, Cola 2,18",
+      "Vì sao": "55,00 − 49,00; chia theo STK-R07: 6,00 × 35/55 = 3,818 → 3,82; 6,00 × 20/55 = 2,182 → 2,18"
+    },
+    {
+      "id": "PRM-EX-22",
+      "rules": [
+        "PRM-R12"
+      ],
+      "Mã": "PRM-EX-22",
+      "Luật": "PRM-R12",
+      "Loại": "âm",
+      "Đầu vào": "gửi duyệt khi thiếu kết thúc và phạm vi món",
+      "Kết quả mong đợi": "không gửi được; báo 2 trường thiếu",
+      "Vì sao": ""
+    },
+    {
+      "id": "PRM-EX-23",
+      "rules": [
+        "PRM-R01",
+        "PRM-R07"
+      ],
+      "Mã": "PRM-EX-23",
+      "Luật": "PRM-R01, PRM-R07",
+      "Loại": "tổ hợp",
+      "Đầu vào": "Đồ uống mua 2 tặng 1; giỏ: 1 Sữa 45,00, 2 Cola 20,00",
+      "Kết quả mong đợi": "tặng 1 Cola, giảm 20,00",
+      "Vì sao": "tặng món rẻ nhất trong 3 món"
+    }
+  ]
+}

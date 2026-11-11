@@ -1,0 +1,12 @@
+work/review-pack/
+work/jobs/
+work/tasks/
+work/briefs/
+.flow/state/jobs/
+.worktrees/
+.flow/config.local.json
+.flow/state/agents/
+.flow/state/usage.json
+.flow/state/summary.json
+.flow/state/last-check.json
+node_modules/

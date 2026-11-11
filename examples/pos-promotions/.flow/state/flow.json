@@ -1,0 +1,17 @@
+{
+  "recipe": "epic",
+  "goal": "Lane 1 cho epic Khuyến mại (POS, khách Thái Lan)",
+  "phase": "spec-gate",
+  "started": "2026-11-11T07:09:14.168Z",
+  "gates": {},
+  "history": [
+    {
+      "at": "2026-11-11T07:09:14.172Z",
+      "event": "start epic"
+    },
+    {
+      "at": "2026-11-11T07:15:00.644Z",
+      "event": "phase spec-gate"
+    }
+  ]
+}

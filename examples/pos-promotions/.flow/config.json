@@ -1,0 +1,92 @@
+{
+  "language": "vi",
+  "project": "pos-promotions",
+  "roles": {
+    "research": "claude",
+    "ba": "claude",
+    "architect": "claude",
+    "ux": "codex",
+    "qa": "codex",
+    "build": "codex",
+    "review": "claude",
+    "docs": "codex",
+    "critic": "claude",
+    "_note": "Who does each role: claude | codex | deepseek. review must differ from build. Machine-specific overrides (e.g. deepseek at home only) go in .flow/config.local.json, which is git-ignored. critic (spec-critic) must differ from the engine that wrote the spec when possible."
+  },
+  "codex": {
+    "args": [
+      "exec",
+      "--sandbox",
+      "workspace-write",
+      "-c",
+      "sandbox_workspace_write.network_access=true"
+    ],
+    "mode": "inplace",
+    "max_rounds": 2,
+    "_note": "inplace: Codex edits the main working tree while Claude does non-code work (no second node_modules, no install inside the sandbox). worktree: only for real parallel slices; the conductor prepares the worktree (install, db) before handing it over. Codex can never write .git: the conductor commits."
+  },
+  "deepseek": {
+    "command": "opencode run -m deepseek/deepseek-v4-flash",
+    "_note": "Used when a role is set to deepseek (usually only in config.local.json on a machine where the API is reachable)."
+  },
+  "models": {
+    "researcher": "sonnet",
+    "ba": "sonnet",
+    "architect": "opus",
+    "ux": "sonnet",
+    "qa": "sonnet",
+    "reviewer": "sonnet",
+    "spec-critic": "sonnet"
+  },
+  "budget": {
+    "context_k": 120,
+    "_note": "The Stop hook suggests a fresh session (/clear) when one turn's context passes this many thousand tokens: every turn re-reads the whole context. The real quota is the 5h % on the status line."
+  },
+  "checks": [],
+  "checks_full": [],
+  "_checks_note": "checks: fast (lint, typecheck), run by the Stop hook only when code changed since the last pass. checks_full: everything (tests, e2e), run in verify.",
+  "_checks_example": [
+    "pnpm lint",
+    "pnpm typecheck"
+  ],
+  "post_edit": {
+    "format": "",
+    "lint": "",
+    "timeout_s": 15,
+    "_note": "Commands for the file just edited, {file} = its path. Empty = off. Set by the conventions skill, e.g. format: \"npx biome format --write {file}\", lint: \"npx eslint {file}\"."
+  },
+  "code_dirs": [
+    "apps",
+    "packages",
+    "src"
+  ],
+  "test_globs": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/test/**",
+    "**/tests/**",
+    "**/e2e/**"
+  ],
+  "baseline": "product/baseline-effort.md",
+  "notify": [
+    "bell",
+    "desktop"
+  ],
+  "ntfy_topic": "",
+  "ui": {
+    "level": "quick",
+    "_note": "quick: one direction on the chosen design system + moodboard, 1 critique round. full: 3 directions, 2 critique rounds, optional v0 exploration, visual regression baselines."
+  },
+  "_checks_full_example": [
+    "pnpm lint",
+    "pnpm typecheck",
+    "pnpm test",
+    "pnpm test:e2e"
+  ],
+  "autopilot": {
+    "gates": "end",
+    "review_every": 1,
+    "stop_at_5h_percent": 85,
+    "_note": "/flow autopilot runs all remaining slices back to back. gates: end = one batch review at the end; each = stop after every slice."
+  }
+}

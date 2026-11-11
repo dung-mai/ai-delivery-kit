@@ -1,0 +1,7 @@
+{
+  "_note": "Copy to .flow/config.local.json on a machine that needs different engines. This file is git-ignored.",
+  "roles": {
+    "research": "deepseek",
+    "docs": "deepseek"
+  }
+}

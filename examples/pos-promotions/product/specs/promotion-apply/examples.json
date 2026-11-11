@@ -1,0 +1,228 @@
+{
+  "capability": "STK",
+  "source": "product/specs/promotion-apply/examples.md",
+  "generated": "2026-11-11T07:14:44.870Z",
+  "examples": [
+    {
+      "id": "STK-EX-01",
+      "rules": [
+        "STK-R01",
+        "STK-R06"
+      ],
+      "Mã": "STK-EX-01",
+      "Luật": "STK-R01, STK-R06",
+      "Loại": "tổ hợp",
+      "Đầu vào": "1 Dầu gội, 2 Sữa, 3 Cola; P1, P9",
+      "Kết quả mong đợi": "giảm 15,90; không áp P9; phải trả 293,10",
+      "Vì sao": "trước giảm 309,00; sau P1 293,10 < 300,00"
+    },
+    {
+      "id": "STK-EX-02",
+      "rules": [
+        "STK-R06",
+        "STK-R08"
+      ],
+      "Mã": "STK-EX-02",
+      "Luật": "STK-R06, STK-R08",
+      "Loại": "biên",
+      "Đầu vào": "1 Dầu gội, 2 Sữa, 4 Cola; P1, P9",
+      "Kết quả mong đợi": "P1 giảm 15,90; P9 giảm 15,66; phải trả 297,44",
+      "Vì sao": "sau P1 313,10 ≥ 300,00; 5% = 1565,5 satang → 1566"
+    },
+    {
+      "id": "STK-EX-03",
+      "rules": [
+        "STK-R02",
+        "STK-R03"
+      ],
+      "Mã": "STK-EX-03",
+      "Luật": "STK-R02, STK-R03",
+      "Loại": "âm",
+      "Đầu vào": "khách thành viên, 1 Dầu gội; P1, P3",
+      "Kết quả mong đợi": "chỉ áp P1, giảm 15,90; P3 không áp",
+      "Vì sao": "P1 độc quyền (15,90) lợi hơn P3 (7,95)"
+    },
+    {
+      "id": "STK-EX-04",
+      "rules": [
+        "STK-R04",
+        "STK-R08"
+      ],
+      "Mã": "STK-EX-04",
+      "Luật": "STK-R04, STK-R08",
+      "Loại": "thường",
+      "Đầu vào": "1 Sữa; P4, P5",
+      "Kết quả mong đợi": "giảm 6,53; còn 38,47",
+      "Vì sao": "4,50; rồi 5% × 40,50 = 2,025 → 2,03"
+    },
+    {
+      "id": "STK-EX-05",
+      "rules": [
+        "STK-R05"
+      ],
+      "Mã": "STK-EX-05",
+      "Luật": "STK-R05",
+      "Loại": "thường",
+      "Đầu vào": "3 Cola; P6, P7",
+      "Kết quả mong đợi": "áp P7, giảm 24,00",
+      "Vì sao": "P6 = 20,00; P7 = 3 × 8,00 = 24,00"
+    },
+    {
+      "id": "STK-EX-06",
+      "rules": [
+        "STK-R05"
+      ],
+      "Mã": "STK-EX-06",
+      "Luật": "STK-R05",
+      "Loại": "biên",
+      "Đầu vào": "3 Cola; P6, P8",
+      "Kết quả mong đợi": "áp P8, giảm 20,00",
+      "Vì sao": "bằng nhau 20,00; P8 ưu tiên 1 cao hơn P6 ưu tiên 2"
+    },
+    {
+      "id": "STK-EX-07",
+      "rules": [
+        "STK-R07"
+      ],
+      "Mã": "STK-EX-07",
+      "Luật": "STK-R07",
+      "Loại": "thường",
+      "Đầu vào": "1 Gạo, 1 Dầu gội; P10",
+      "Kết quả mong đợi": "Gạo giảm 27,16; Dầu gội giảm 22,84",
+      "Vì sao": "5000 × 18900 / 34800 = 2715,52 → 2716; 5000 × 15900 / 34800 = 2284,48 → 2284; cộng 5000"
+    },
+    {
+      "id": "STK-EX-08",
+      "rules": [
+        "STK-R07",
+        "STK-R08"
+      ],
+      "Mã": "STK-EX-08",
+      "Luật": "STK-R07, STK-R08",
+      "Loại": "biên",
+      "Đầu vào": "3 dòng 100,00; giảm cấp giỏ 10,00",
+      "Kết quả mong đợi": "3,34 · 3,33 · 3,33",
+      "Vì sao": "mỗi phần 333,3 → 333; dư 1 satang vào dòng quét trước"
+    },
+    {
+      "id": "STK-EX-09",
+      "rules": [
+        "STK-R09"
+      ],
+      "Mã": "STK-EX-09",
+      "Luật": "STK-R09",
+      "Loại": "biên",
+      "Đầu vào": "1 Snack; giảm 40,00 theo món",
+      "Kết quả mong đợi": "giảm 35,00; dòng còn 0,00",
+      "Vì sao": "không âm"
+    },
+    {
+      "id": "STK-EX-10",
+      "rules": [
+        "STK-R10"
+      ],
+      "Mã": "STK-EX-10",
+      "Luật": "STK-R10",
+      "Loại": "thường",
+      "Đầu vào": "1 Dầu gội, chưa nhận diện; P3; rồi nhận diện thành viên",
+      "Kết quả mong đợi": "trước: giảm 0,00; sau: giảm 7,95",
+      "Vì sao": "tính lại khi nhận diện; 159,00 × 5%"
+    },
+    {
+      "id": "STK-EX-11",
+      "rules": [
+        "STK-R11"
+      ],
+      "Mã": "STK-EX-11",
+      "Luật": "STK-R11",
+      "Loại": "thường",
+      "Đầu vào": "giỏ của STK-EX-02, phải trả 297,44, thuế 7%",
+      "Kết quả mong đợi": "VAT 19,46; trước VAT 277,98",
+      "Vì sao": "29744 × 7 / 107 = 1945,9 → 1946"
+    },
+    {
+      "id": "STK-EX-12",
+      "rules": [
+        "STK-R11"
+      ],
+      "Mã": "STK-EX-12",
+      "Luật": "STK-R11",
+      "Loại": "biên",
+      "Đầu vào": "phải trả 107,00; bán 30/09/2027 23:59 (7%) và 01/10/2027 00:00 (cấu hình 10% từ 01/10/2027)",
+      "Kết quả mong đợi": "VAT 7,00 và 9,73",
+      "Vì sao": "10700 × 7 / 107 = 700; 10700 × 10 / 110 = 972,7 → 973"
+    },
+    {
+      "id": "STK-EX-13",
+      "rules": [
+        "STK-R12"
+      ],
+      "Mã": "STK-EX-13",
+      "Luật": "STK-R12",
+      "Loại": "biên",
+      "Đầu vào": "khuyến mại kết thúc 18:00; quét 17:58, bấm tổng 18:01",
+      "Kết quả mong đợi": "không áp",
+      "Vì sao": "xét lúc bấm tổng"
+    },
+    {
+      "id": "STK-EX-14",
+      "rules": [
+        "STK-R12"
+      ],
+      "Mã": "STK-EX-14",
+      "Luật": "STK-R12",
+      "Loại": "biên",
+      "Đầu vào": "khuyến mại kết thúc 18:00; bấm tổng 17:59:59",
+      "Kết quả mong đợi": "áp",
+      "Vì sao": "trước giờ kết thúc"
+    },
+    {
+      "id": "STK-EX-15",
+      "rules": [
+        "STK-R13"
+      ],
+      "Mã": "STK-EX-15",
+      "Luật": "STK-R13",
+      "Loại": "thường",
+      "Đầu vào": "giỏ của STK-EX-02",
+      "Kết quả mong đợi": "biên lai: dòng \"Dầu gội −10%\" −15,90; dòng giảm giỏ −15,66 chia vào các dòng; tổng 297,44",
+      "Vì sao": ""
+    },
+    {
+      "id": "STK-EX-16",
+      "rules": [
+        "STK-R14"
+      ],
+      "Mã": "STK-EX-16",
+      "Luật": "STK-R14",
+      "Loại": "thường",
+      "Đầu vào": "máy offline từ 09:00; khuyến mại mới duyệt 10:00; bán 10:30",
+      "Kết quả mong đợi": "không áp khuyến mại mới; giao dịch ghi mã bộ khuyến mại lúc 09:00",
+      "Vì sao": ""
+    },
+    {
+      "id": "STK-EX-17",
+      "rules": [
+        "STK-R14"
+      ],
+      "Mã": "STK-EX-17",
+      "Luật": "STK-R14",
+      "Loại": "biên",
+      "Đầu vào": "máy offline; khuyến mại kết thúc 18:00; đồng hồ máy 18:00:00 lúc bấm tổng",
+      "Kết quả mong đợi": "không áp",
+      "Vì sao": "kết thúc không tính, theo giờ máy"
+    },
+    {
+      "id": "STK-EX-18",
+      "rules": [
+        "STK-R15"
+      ],
+      "Mã": "STK-EX-18",
+      "Luật": "STK-R15",
+      "Loại": "tổ hợp",
+      "Đầu vào": "1 Dầu gội, 2 Sữa, 4 Cola; P1, P9, P10",
+      "Kết quả mong đợi": "áp P10, giảm giỏ 50,00; không áp P9",
+      "Vì sao": "sau P1 313,10: P9 = 15,66, P10 = 50,00"
+    }
+  ]
+}

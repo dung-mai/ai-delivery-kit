@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-11T07:14:55.216Z",
+  "report": [
+    {
+      "cap": "STK",
+      "slug": "promotion-apply",
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "lines": 80,
+        "rules": 15,
+        "scenarios": 7,
+        "examples": 18,
+        "byType": {
+          "thường": 7,
+          "biên": 8,
+          "âm": 1,
+          "tổ hợp": 2,
+          "?": 0
+        },
+        "assumptions": 5,
+        "questions": 7
+      }
+    },
+    {
+      "cap": "PRM",
+      "slug": "promotion-definition",
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "lines": 88,
+        "rules": 12,
+        "scenarios": 6,
+        "examples": 23,
+        "byType": {
+          "thường": 7,
+          "biên": 8,
+          "âm": 5,
+          "tổ hợp": 3,
+          "?": 0
+        },
+        "assumptions": 3,
+        "questions": 2
+      }
+    }
+  ]
+}
