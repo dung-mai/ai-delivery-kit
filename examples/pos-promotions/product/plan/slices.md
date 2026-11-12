@@ -6,7 +6,7 @@
   - Test QA (đóng băng): `test/promotion-apply.test.mjs`, `test/promotion-definition.test.mjs`
   - Demo mở được: `npm test`, biên lai trong `test/receipt.test.mjs`
 
-- [ ] **S2 · Vòng đời khuyến mại**
+- [x] **S2 · Vòng đời khuyến mại**
   - Năng lực/mã: PRM-R08, PRM-R09, PRM-R12; ví dụ PRM-EX-15, PRM-EX-22; kịch bản PRM-S04
   - Builder: codex
   - Brief: `work/slices/S2.md`

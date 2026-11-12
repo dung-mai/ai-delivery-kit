@@ -1,7 +1,7 @@
 {
   "recipe": "epic",
   "goal": "Epic Khuyến mại (POS, khách Thái Lan)",
-  "phase": "S2",
+  "phase": "S3",
   "started": "2026-11-11T07:09:14.168Z",
   "gates": {
     "route": {
@@ -47,6 +47,10 @@
     {
       "at": "2026-11-12T02:49:46.228Z",
       "event": "phase S2"
+    },
+    {
+      "at": "2026-11-12T02:52:45.918Z",
+      "event": "phase S3"
     }
   ]
 }
