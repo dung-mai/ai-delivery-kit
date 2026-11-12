@@ -33,7 +33,7 @@ Làm trong một **thư mục riêng cho demo**, để không đụng vào thư 
 cd D:\work
 git clone https://github.com/dung-mai/ai-delivery-kit.git ai-delivery-kit-demo
 cd ai-delivery-kit-demo
-git switch -C demo-run pos-demo/start
+git switch -C demo-run origin/pos-demo/start
 ```
 
 **A2. Kiểm tra Node và test:**
@@ -55,7 +55,7 @@ node .flow\sensors\flow.mjs doctor
 **A4. Chuẩn bị bản dự phòng cho demo 8** (một thư mục chứa S2 đã làm xong):
 ```
 cd D:\work\ai-delivery-kit-demo
-git worktree add ..\demo-s2-done pos-demo/after-s2
+git worktree add ..\demo-s2-done origin/pos-demo/after-s2
 ```
 
 **A5. Mở sẵn 2 cửa sổ terminal**, cả hai ở `D:\work\ai-delivery-kit-demo\examples\pos-promotions`:
@@ -84,7 +84,7 @@ Demo nào quá 10 phút: thu nhỏ đầu vào (ví dụ demo 2 chỉ giữ 3 d�
 **Trả lại trạng thái ban đầu sau mỗi lần tập:**
 ```
 cd D:\work\ai-delivery-kit-demo
-git switch -C demo-run pos-demo/start --discard-changes
+git switch -C demo-run origin/pos-demo/start --discard-changes
 git clean -fd examples\pos-promotions
 ```
 
@@ -148,7 +148,7 @@ Mở `product/questions.md`: 6 câu, mỗi câu có phương án, đề xuất v
 2. Dán lệnh `/flow "bug: …"` trong file đó.
 3. Chỉ cho người xem lúc test mới **đỏ** (tái hiện được bug), rồi lúc **xanh** sau khi sửa.
 4. Mở phần review và walkthrough nó viết.
-- Trục trặc: `git diff pos-demo/start pos-demo/after-bugfix` để xem bản sửa mẫu.
+- Trục trặc: `git diff origin/pos-demo/start origin/pos-demo/after-bugfix` để xem bản sửa mẫu.
 
 ### Demo 7 · Việc nhỏ (5–8 phút)
 1. Dán lệnh trong `demo/inputs/7-quick.md`.
