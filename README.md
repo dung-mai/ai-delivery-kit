@@ -4,7 +4,7 @@ Bộ framework giao việc phần mềm cho AI agent, dùng lại được giữ
 
 - `kit/` — framework, cài vào dự án bằng `install.mjs`.
 - `pos/` — bài thử đầu tiên: POS greenfield trong khoảng 1 tuần. Mốc effort đã chốt trước khi làm: `pos/product/baseline-effort.md`.
-- `examples/pos-promotions/` — mẫu đầu ra lane Requirement (v3) cho epic Khuyến mại: context có "nguồn chưa nói", bản đồ, 2 spec + 41 ví dụ, 8 thẻ quyết định, danh sách câu hỏi cho khách, knowledge seed, review pack.
+- `examples/pos-promotions/` — dự án mẫu epic Khuyến mại: lane Requirement (spec, 41 ví dụ, thẻ quyết định, câu hỏi cho khách, knowledge), slice S1 (engine giá + 40 test) và **bộ demo 8 loại việc**: xem `examples/pos-promotions/DEMO.md`.
 
 ## v3: router + 4 lane
 

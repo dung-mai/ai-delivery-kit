@@ -1,6 +1,6 @@
 # D-07 · Máy POS mất kết nối thì áp khuyến mại thế nào?
 
-- Trạng thái: mở
+- Trạng thái: đã chốt
 - Loại: assume
 - Chặn: không
 - Ảnh hưởng: STK-R14
@@ -19,4 +19,4 @@ Proposal yêu cầu bán được khi mất mạng (handover §3). Khuyến mạ
 A, kèm báo cáo các giao dịch offline có khuyến mại đã hết hạn theo giờ máy chủ. Độ tin cậy: trung bình; SA chốt ở cổng thiết kế.
 
 ## Quyết định
-(để trống đến khi chốt) · Người chốt: · Ngày:
+Phương án A. · Người chốt: SA (chuẩn bị demo) · Ngày: 12/11/2026

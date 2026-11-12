@@ -1,0 +1,14 @@
+{
+  "test/promotion-apply.test.mjs": {
+    "sha": "aeaffd9eaa39ccc2116e39711668f3b077581c66e5b966fd33a40e226dfc09cb",
+    "at": "2026-11-12T02:49:46.166Z"
+  },
+  "test/promotion-definition.test.mjs": {
+    "sha": "5383c942634c745b05ebc7d66922a0e982f80948d974adddf0b1124998225c68",
+    "at": "2026-11-12T02:49:46.166Z"
+  },
+  "test/fixtures.mjs": {
+    "sha": "2f448f08bdd3d239e237eb3d9b2d9de121186dfc205046ec401e1f0b0a751279",
+    "at": "2026-11-12T02:49:46.166Z"
+  }
+}

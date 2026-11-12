@@ -1,0 +1,12 @@
+{
+  "name": "pos-promotions",
+  "private": true,
+  "type": "module",
+  "description": "POS promotions epic: pricing engine slice (demo project for AI Delivery Kit v3)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

@@ -42,8 +42,12 @@
     "context_k": 120,
     "_note": "The Stop hook suggests a fresh session (/clear) when one turn's context passes this many thousand tokens: every turn re-reads the whole context. The real quota is the 5h % on the status line."
   },
-  "checks": [],
-  "checks_full": [],
+  "checks": [
+    "node --test \"test/*.test.mjs\""
+  ],
+  "checks_full": [
+    "node --test \"test/*.test.mjs\""
+  ],
   "_checks_note": "checks: fast (lint, typecheck), run by the Stop hook only when code changed since the last pass. checks_full: everything (tests, e2e), run in verify.",
   "_checks_example": [
     "pnpm lint",
@@ -56,9 +60,8 @@
     "_note": "Commands for the file just edited, {file} = its path. Empty = off. Set by the conventions skill, e.g. format: \"npx biome format --write {file}\", lint: \"npx eslint {file}\"."
   },
   "code_dirs": [
-    "apps",
-    "packages",
-    "src"
+    "src",
+    "test"
   ],
   "test_globs": [
     "**/*.test.*",

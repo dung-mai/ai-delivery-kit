@@ -1,6 +1,6 @@
 # D-08 · Best deal so sánh trên từng nhóm món hay trên cả giỏ?
 
-- Trạng thái: mở
+- Trạng thái: đã chốt
 - Loại: assume
 - Chặn: không
 - Ảnh hưởng: STK-R05
@@ -19,4 +19,4 @@ Phát hiện ở vòng soi spec: "mua 2 tặng 1" và combo trải trên nhiều
 A; nếu bộ khuyến mại thật của khách có nhiều nhóm chồng chéo, làm POC B. Độ tin cậy: trung bình.
 
 ## Quyết định
-(để trống đến khi chốt) · Người chốt: · Ngày:
+Phương án A. · Người chốt: SA (chuẩn bị demo) · Ngày: 12/11/2026

@@ -1,6 +1,6 @@
 # Câu hỏi cho khách
 
-> Tự sinh bởi `flow.mjs questions` lúc 14:15:18 11/11/2026 từ các thẻ quyết định loại "ask client". Không sửa tay: sửa thẻ D-xx.
+> Tự sinh bởi `flow.mjs questions` lúc 09:51:08 12/11/2026 từ các thẻ quyết định loại "ask client". Không sửa tay: sửa thẻ D-xx.
 
 6 câu, 0 câu đang chặn việc. Mỗi câu có phương án và đề xuất của chúng tôi; khách chỉ cần chọn hoặc sửa. Khi chưa trả lời, đội làm tiếp theo cột "Đang dùng tạm".
 
