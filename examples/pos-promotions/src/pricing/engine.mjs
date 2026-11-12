@@ -89,7 +89,7 @@ function discountFor(p, subset, running) {
     let times = Math.floor(qty / (p.x + p.y));
     if (p.maxTimes) times = Math.min(times, p.maxTimes);
     const units = scoped.flatMap(({ l }) => Array.from({ length: l.qty }, () => ({ index: l.index, price: l.price })));
-    units.reverse(); // the units scanned last are the free ones
+    units.sort((a, b) => a.price - b.price || a.index - b.index); // PRM-R01: the cheapest units are free
     for (const u of units.slice(0, times * p.y)) out.set(u.index, (out.get(u.index) || 0) + u.price);
   }
   if (p.type === 'bundle') {
