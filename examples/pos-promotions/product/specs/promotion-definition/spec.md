@@ -13,20 +13,20 @@ Nguồn: `product/source/pos-system-handover.md` §2; `knowledge/domain/promotio
 | Thu ngân | thấy khuyến mại được áp trên giỏ | sửa, tắt khuyến mại |
 
 ## Luật
-| Mã | Khi | Thì | Ghi chú / nguồn |
-|---|---|---|---|
-| PRM-R01 | Tạo khuyến mại | Chọn 1 trong 6 loại: giảm % theo món; giảm số tiền theo món; giá đặc biệt; mua X tặng Y (tặng món rẻ nhất trong phạm vi); combo giá cố định; giảm theo ngưỡng giỏ hàng (% hoặc số tiền) | handover §2 (bundle, best-deal); `knowledge/domain/promotions.md` |
-| PRM-R02 | Xét khuyến mại cho một giao dịch | Chỉ đủ điều kiện nếu thời điểm xét (STK-R12) nằm trong [bắt đầu, kết thúc), giờ Asia/Bangkok | kết thúc không bao gồm |
-| PRM-R03 | Khuyến mại có danh sách cửa hàng | Máy của cửa hàng không có trong danh sách thì không đủ điều kiện; danh sách rỗng = mọi cửa hàng | |
-| PRM-R04 | Khuyến mại giới hạn nhóm khách (thành viên, nhân viên) | Chỉ đủ điều kiện khi khách đã được nhận diện thuộc nhóm đó trước lúc xét | nhận diện sau khi bấm tổng: STK-R10 |
-| PRM-R05 | Xác định món thuộc phạm vi | Món thuộc phạm vi nếu khớp danh sách mã hàng, ngành hàng hoặc thương hiệu, và không nằm trong danh sách loại trừ; loại trừ thắng | |
-| PRM-R06 | Khuyến mại có ngưỡng số lượng hoặc số tiền | Đủ điều kiện khi số lượng ≥ ngưỡng, hoặc số tiền ≥ ngưỡng (tiền tính theo STK-R06) | "≥" bao gồm ngưỡng |
-| PRM-R07 | Mua X tặng Y, số lượng trong giỏ là n | Áp dụng floor(n / (X + Y)) lần, không quá giới hạn số lần mỗi giao dịch nếu có | |
-| PRM-R08 | Đổi trạng thái | Nháp → Chờ duyệt → Đã duyệt → (Đang chạy / Hết hạn / Đã ngừng); chỉ khuyến mại Đã duyệt được gửi xuống máy; người duyệt khác người tạo | D-05 |
-| PRM-R09 | Sửa khuyến mại Đã duyệt | Tạo phiên bản mới ở trạng thái Chờ duyệt; phiên bản cũ chạy tiếp đến khi bản mới được duyệt; giao dịch ghi mã và phiên bản đã áp | handover §5 (snapshot) |
-| PRM-R10 | Mức giảm lớn hơn giá dòng | Giảm tối đa bằng giá dòng; giá sau giảm không âm | |
-| PRM-R11 | Khuyến mại có mức giảm tối đa | Số tiền giảm của khuyến mại trong một giao dịch không vượt mức này | |
-| PRM-R12 | Thiếu trường bắt buộc khi gửi duyệt | Không cho gửi duyệt; báo từng trường thiếu | bắt buộc: tên, loại, mức giảm, bắt đầu, kết thúc, phạm vi món |
+| Mã | Khi | Thì | Căn cứ | Ghi chú |
+|---|---|---|---|---|
+| PRM-R01 | Tạo khuyến mại | Chọn 1 trong 6 loại: giảm % theo món; giảm số tiền theo món; giá đặc biệt; mua X tặng Y (tặng món rẻ nhất trong phạm vi); combo giá cố định; giảm theo ngưỡng giỏ hàng (% hoặc số tiền) | [TL pos-system-handover.md §2] [KB domain/promotions.md] | handover §2 (bundle, best-deal); `knowledge/domain/promotions.md` |
+| PRM-R02 | Xét khuyến mại cho một giao dịch | Chỉ đủ điều kiện nếu thời điểm xét (STK-R12) nằm trong [bắt đầu, kết thúc), giờ Asia/Bangkok | [GĐ-04] [D-03] | kết thúc không bao gồm |
+| PRM-R03 | Khuyến mại có danh sách cửa hàng | Máy của cửa hàng không có trong danh sách thì không đủ điều kiện; danh sách rỗng = mọi cửa hàng | [GĐ-05] |  |
+| PRM-R04 | Khuyến mại giới hạn nhóm khách (thành viên, nhân viên) | Chỉ đủ điều kiện khi khách đã được nhận diện thuộc nhóm đó trước lúc xét | [TL pos-system-handover.md §8] | nhận diện sau khi bấm tổng: STK-R10 |
+| PRM-R05 | Xác định món thuộc phạm vi | Món thuộc phạm vi nếu khớp danh sách mã hàng, ngành hàng hoặc thương hiệu, và không nằm trong danh sách loại trừ; loại trừ thắng | [KB domain/promotions.md] |  |
+| PRM-R06 | Khuyến mại có ngưỡng số lượng hoặc số tiền | Đủ điều kiện khi số lượng ≥ ngưỡng, hoặc số tiền ≥ ngưỡng (tiền tính theo STK-R06) | [KB domain/promotions.md] | "≥" bao gồm ngưỡng |
+| PRM-R07 | Mua X tặng Y, số lượng trong giỏ là n | Áp dụng floor(n / (X + Y)) lần, không quá giới hạn số lần mỗi giao dịch nếu có | [KB domain/promotions.md] |  |
+| PRM-R08 | Đổi trạng thái | Nháp → Chờ duyệt → Đã duyệt → (Đang chạy / Hết hạn / Đã ngừng); chỉ khuyến mại Đã duyệt được gửi xuống máy; người duyệt khác người tạo | [D-05] | D-05 |
+| PRM-R09 | Sửa khuyến mại Đã duyệt | Tạo phiên bản mới ở trạng thái Chờ duyệt; phiên bản cũ chạy tiếp đến khi bản mới được duyệt; giao dịch ghi mã và phiên bản đã áp | [TL pos-system-handover.md §5] | handover §5 (snapshot) |
+| PRM-R10 | Mức giảm lớn hơn giá dòng | Giảm tối đa bằng giá dòng; giá sau giảm không âm | [GĐ-06] |  |
+| PRM-R11 | Khuyến mại có mức giảm tối đa | Số tiền giảm của khuyến mại trong một giao dịch không vượt mức này | [KB domain/promotions.md] |  |
+| PRM-R12 | Thiếu trường bắt buộc khi gửi duyệt | Không cho gửi duyệt; báo từng trường thiếu | [GĐ-07] | bắt buộc: tên, loại, mức giảm, bắt đầu, kết thúc, phạm vi món |
 
 ## Kịch bản
 - **PRM-S01** [auto] Given khuyến mại "Sữa −10%" Đã duyệt từ 01/12 00:00 đến 01/01 00:00 cho mọi cửa hàng When thu ngân bấm tổng lúc 15/12 10:00 với 2 hộp sữa Then khuyến mại đủ điều kiện cho 2 dòng sữa.
@@ -75,9 +75,13 @@ stateDiagram-v2
 Cửa hàng (PRM-R03) · nhóm khách (PRM-R04) · khung giờ (PRM-R02).
 
 ## Giả định
-- Khung giờ dùng giờ Asia/Bangkok cho mọi cửa hàng (14 chi nhánh cùng múi giờ).
-- Tên khuyến mại có tiếng Thái và tiếng Anh để in biên lai.
-- Người duyệt khác người tạo (D-05).
+- GĐ-01 · Tên khuyến mại có tiếng Thái và tiếng Anh để in biên lai.
+- GĐ-02 · Người duyệt khác người tạo (D-05).
+- GĐ-03 · Khung giờ dùng giờ Asia/Bangkok cho mọi cửa hàng (14 chi nhánh cùng múi giờ).
+- GĐ-04 · Kết thúc khung giờ không tính (khoảng [bắt đầu, kết thúc)).
+- GĐ-05 · Danh sách cửa hàng rỗng nghĩa là mọi cửa hàng.
+- GĐ-06 · Mức giảm không vượt giá dòng.
+- GĐ-07 · Danh sách trường bắt buộc khi gửi duyệt như bảng Màn hình và trường.
 
 ## Câu hỏi mở
 - D-05 · Có cần duyệt 4 mắt · đề xuất có · đang dùng: có.

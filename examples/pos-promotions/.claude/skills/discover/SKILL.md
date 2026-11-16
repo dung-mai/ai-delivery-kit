@@ -1,23 +1,21 @@
 ---
 name: discover
-description: Lane 1, first half, for epics and greenfield. Reads every source, builds shared understanding before specs - goals, roles, capability map with depth, variations, integrations, unknowns - and says what the sources do not say. Use right after triage for epic or greenfield work.
+description: Lane 1 fact finding, run in the background while elicit asks questions. Reads the sources, the existing code and knowledge/ for one topic and writes the facts with their source - what the sources say, what the code already does, what they do not say. Never asks the human anything. Use when elicit starts a topic, or for a greenfield product context.
 ---
 
-# Discover
+# Discover (background facts for elicit)
 
-Delegate to the **ba** subagent; researchers available for facts. Check `knowledge/` first.
+Runs as researcher / ba subagents in the background (`run_in_background`), one per area when they are independent (sources, code, knowledge). Elicit keeps asking the human meanwhile.
 
-## Inputs
-`product/source/*` (masked: no real client personal data), `product/context.md`, `knowledge/`, triage notes.
+## Brief to give each subagent
+- Topic and its interview log `product/discovery/<slug>/interview.md`.
+- Where to look: `product/source/*` (masked documents), `product/specs/`, `product/context.md`, `knowledge/`, and the code folders in `.flow/config.json` → `code_dirs`.
+- Return facts only, each with its source: `[TL <file> §<section>]`, `[CODE <path>]`, `[KB <file>]`. A fact is something written somewhere; an inference is labelled "suy luận" with what it rests on.
+- Return also **what the sources do not say** about the topic: those become questions.
+- Timebox: 10 minutes of agent work. No questions to the human.
 
-## Steps
-1. **Source inventory** in `product/context.md` → `## Nguồn`: one line per source (what it covers, how reliable: đã ký / đề xuất / ghi chú họp), then **what the sources do not say** for this scope. That gap list is the most valuable output of discover.
-2. Context: goal, success measures, roles and what each may / may not do, constraints (time, tech, law), glossary (TH / EN / VI terms when the client is not Vietnamese).
-3. **Variation axes**: what differs by store, branch, channel, terminal type, customer group, time. Each axis becomes a column in later example tables.
-4. **Touchpoints**: integrations, devices, documents (receipts, tax invoices) the scope touches, one line each with direction and owner.
-5. `product/map.md`: capabilities with a one-line purpose, depth this iteration (`sâu` / `vừa` / `giả lập` / `ngoài phạm vi`), main risk, and for an epic the proposed split into features.
-6. Unknowns → draft cards with an explore mode each (explore skill); mark which block define. Run `flow.mjs questions`.
-7. Demo script: 3–6 steps a stakeholder will watch at the end.
+## When it returns
+The conductor appends the facts to **Sự thật đã tìm** in the log, updates **Căn cứ đã đọc**, removes questions the facts answered (mark them `[x]` with the fact as answer and its source), and asks the questions that were waiting on these facts in the next round.
 
-## Done when
-Every source is inventoried with its gaps; every capability has a depth; variation axes and touchpoints are listed; every blocking unknown is a card. For greenfield, gate **scope**: the human approves map + demo script.
+## Product context (greenfield, once per product)
+Also fill `product/context.md` (goal, roles, variation axes, touchpoints, constraints, glossary) and the source inventory with its "Nguồn chưa nói" list.

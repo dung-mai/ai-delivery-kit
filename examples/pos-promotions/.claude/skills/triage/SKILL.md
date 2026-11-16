@@ -22,13 +22,14 @@ The request (chat, a file the user points to, attached documents), `product/cont
    | greenfield | no product yet (an epic for the whole product) |
    Unsure between two → pick the smaller one and say so; escalation later is one line, not a restart.
 3. Core flags: money, tax, offline/sync, payment state, integrations, data model, auth/roles, personal data, hardware. Any flag on quick → it becomes feature. Flags decide whether the design gate runs.
-4. Unknowns: top unknowns (max 7), each with its explore mode (assume / analyze / research / POC / prototype / ask client). Mark the ones that block the first step.
+4. Unknowns: for small routes, list the top unknowns (max 7) with their explore mode. For feature / epic / greenfield, the unknowns are the first elicit round, not a list.
 5. `node .flow/sensors/flow.mjs start <route> "<one-line goal>"`; write `product/context.md` from the template if missing.
 
 ## Output to the human (≤ 6 lines)
 Route and why · size · flags · steps with their outputs · where it will stop for a person · blocking unknowns.
-- quick, bug, feature: start the first step right away; the human can still redirect.
-- epic, change, greenfield: ask one question first: "Đi theo kế hoạch này?" (đồng ý / đổi route / thu hẹp phạm vi).
+- quick, bug: start right away; the human can still redirect.
+- feature, epic, greenfield, or anything vague: go straight into the **elicit** skill. Its round 1 includes the route confirmation; do not read the whole repo first and do not ask a separate "đi theo kế hoạch này?".
+- change: write the delta, then ask the affected decisions as one elicit round.
 
 ## Escalate during work
 A step that discovers core work or a new rule moves the item to the bigger route: `flow.mjs start <route>` again with the same goal, one line on the board explaining why. Finished outputs are kept.

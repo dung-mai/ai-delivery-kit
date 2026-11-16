@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// AI Delivery Kit v3 — deterministic helpers for the conductor, the hooks and the humans. No dependencies, Node >= 20.
+// AI Delivery Kit v4 — deterministic helpers for the conductor, the hooks and the humans. No dependencies, Node >= 20.
 //
 //   node .flow/sensors/flow.mjs <command> [...]
 //
@@ -13,7 +13,8 @@
 //   freeze add <paths..> | check | release <path> | list
 //   effort log <minutes> "<note>" [--item X] | machine <engine> <tokens> "<note>" | done <item> [percent] | report
 //   spec-lint [cap]                quality of capability specs (size, Given/When/Then, example types, vague words); exit 1 on errors
-//   questions                      product/questions.md: one client question list from open "ask client" cards
+//   elicit [slug]                  interview progress (product/discovery/*/interview.md): step, rounds, decided / open / client; updates status line
+//   questions                      product/questions.md from open client questions (cards + interviews); checks product/client-questions.md covers them
 //   review-pack [--mark-approved] [--no-pdf]
 //   shots <file.html|url> [--out dir] [--name n]   desktop/tablet/mobile screenshots for the UI critique loop
 //   run <name> -- <command>        run a long job (codex, tests…) with a log in work/jobs/, visible in watch/statusline
@@ -170,6 +171,39 @@ function changesList() {
     return { name: d.name, status: (t.match(/Trạng thái\s*:\s*([^·\n]+)/i) || [])[1]?.trim() || '?' };
   });
 }
+// ---------- interviews (lane 1) ----------
+const Q_ID = /\b([A-Z]{2,5}-Q\d{2,3})\b/;
+function discoveries() {
+  if (!fs.existsSync('product/discovery')) return [];
+  return fs.readdirSync('product/discovery').filter((d) => fs.existsSync(path.join('product/discovery', d, 'interview.md'))).map((slug) => {
+    const file = path.join('product/discovery', slug, 'interview.md');
+    const t = read(file);
+    const title = (t.match(/^#\s+(.+)$/m) || [])[1] || slug;
+    const code = (title.match(/\(([A-Z]{2,5})\)/) || [])[1] || '';
+    const stepM = t.match(/^-\s*Bước:\s*(\d)\s*\/\s*6\s*(?:·\s*(.*))?$/m);
+    const tree = [...t.matchAll(/^\s*-\s*\[([ x~?\-])\]\s*([A-Z]{2,5}-Q\d{2,3})\b(.*)$/gm)].map((m) => ({ mark: m[1], id: m[2], text: m[3].trim() }));
+    const headings = [...t.matchAll(/^###\s+([A-Z]{2,5}-Q\d{2,3})\b/gm)].map((m) => m[1]);
+    const shared = (t.split(/^##\s+Hiểu biết chung.*$/m)[1] || '').split(/^##\s/m)[0];
+    const confirmed = /^-\s*Xác nhận:\s*(?!<)\S/m.test(shared);
+    const n = (mark) => tree.filter((q) => q.mark === mark).length;
+    return { slug, file, title, code, step: stepM ? Number(stepM[1]) : 1, stepName: (stepM?.[2] || '').trim(), rounds: (t.match(/^##\s+Vòng\s/gm) || []).length,
+      ids: new Set([...headings, ...tree.map((q) => q.id)]), tree, decided: n('x'), asking: n('~'), waiting: n(' '), client: n('?'), dropped: n('-'), confirmed,
+      mtime: fs.statSync(file).mtimeMs };
+  }).sort((a, b) => b.mtime - a.mtime);
+}
+const reqLine = (d) => `${d.code || d.slug} · bước ${d.step}/6${d.stepName ? ` ${d.stepName}` : ''} · vòng ${d.rounds} · chốt ${d.decided} · đang hỏi ${d.asking} · chờ ${d.waiting} · hỏi khách ${d.client}${d.confirmed ? ' · đã xác nhận' : ''}`;
+function elicit() {
+  const only = args[0];
+  const ds = discoveries().filter((d) => !only || d.slug === only || d.code === only);
+  if (!ds.length) { console.log(only ? `Không thấy phỏng vấn ${only} trong product/discovery/` : 'Chưa có phỏng vấn nào (product/discovery/<chủ-đề>/interview.md).'); return; }
+  for (const d of ds) {
+    console.log(`${d.title}\n  ${reqLine(d)}`);
+    for (const q of d.tree.filter((x) => x.mark === '~')) console.log(`  ~ ${q.id} ${q.text}`);
+    for (const q of d.tree.filter((x) => x.mark === '?')) console.log(`  ? ${q.id} ${q.text}`);
+  }
+  board();
+}
+
 function testIndex() {
   const tests = codeFiles().filter(isTest);
   const byId = new Map();
@@ -262,6 +296,9 @@ function board() {
     ...(issues.length ? [`- ${issues.length} vấn đề từ \`flow.mjs check\` (xem cuối trang)`] : []),
     ...(!blocking.length && !ask.length && !open.length && !ch.length && !issues.length ? ['- Không có gì đang chờ.'] : []),
     '',
+    '## Requirement',
+    ...(discoveries().length ? discoveries().map((d) => `- ${d.title}: ${reqLine(d)} — \`${d.file}\``) : ['- (chưa có phỏng vấn: `/flow elicit "<chủ đề>"`)']),
+    '',
     '## Năng lực',
   ];
   const mrows = mapRows();
@@ -282,7 +319,8 @@ function board() {
   if (issues.length) out.push('', '## Kiểm tra', ...issues.map((i) => `- ${i}`));
   if (s.history?.length) out.push('', '## Gần đây', ...s.history.slice(-6).reverse().map((h) => `- ${local(h.at)} · ${h.event}`));
   write(P.board, out.join('\n') + '\n');
-  writeJson(P.summary, { at: now(), recipe: s.recipe || '', phase: s.phase || '', needYou: blocking.length + ask.length + ch.length, blocking: blocking.length, checks: issues.length,
+  const dsc = discoveries();
+  writeJson(P.summary, { at: now(), recipe: s.recipe || '', phase: s.phase || '', req: dsc.length && !dsc[0].confirmed || (dsc.length && dsc[0].step < 6) ? reqLine(dsc[0]) : '', needYou: blocking.length + ask.length + ch.length, blocking: blocking.length, checks: issues.length,
     slices: { done: sl.filter((x) => x.done).length, total: sl.length }, current: (sl.find((x) => !x.done) || {}).name || '' });
   if (cmd === 'board') console.log(`Wrote ${P.board}`);
 }
@@ -315,6 +353,7 @@ function runChecks() {
     if (isOpen(d) && !d.kind) issues.push(`${d.file}: thẻ mở cần "- Loại:" (assume/analyze/research/POC/prototype/ask client/defer)`);
   }
   for (const f of frozenProblems()) issues.push(f);
+  if (fs.existsSync('product/client-questions.md')) for (const m of clientCoverage()) issues.push(m);
   return issues;
 }
 function check() {
@@ -468,7 +507,8 @@ function specRules(text) {
     if (!idCol || !t.rows.some((r) => /-R\d/.test(r[idCol]))) continue;
     const whenCol = t.headers.find((h) => /^(khi|when|điều kiện)$/i.test(h));
     const thenCol = t.headers.find((h) => /^(thì|then|kết quả)$/i.test(h));
-    return t.rows.filter((r) => /-R\d/.test(r[idCol])).map((r) => ({ id: r[idCol].replace(/\*/g, '').trim(), when: r[whenCol] || '', then: r[thenCol] || '' }));
+    const basisCol = t.headers.find((h) => /^(căn cứ|basis)$/i.test(h));
+    return t.rows.filter((r) => /-R\d/.test(r[idCol])).map((r) => ({ id: r[idCol].replace(/\*/g, '').trim(), when: r[whenCol] || '', then: r[thenCol] || '', basis: basisCol ? String(r[basisCol] || '') : null }));
   }
   return [];
 }
@@ -515,7 +555,32 @@ function lintCap(c) {
   const section = (name) => (text.split(new RegExp(`^##\\s+${name}.*$`, 'mi'))[1] || '').split(/^##\s/m)[0];
   const assumptions = (section('Giả định').match(/^\s*[-*]\s+\S/gm) || []).length;
   const questions = (section('Câu hỏi mở').match(/^\s*[-*]\s+\S/gm) || []).length;
-  return { errors, warnings, stats: { lines, rules: c.rules.length, scenarios: c.scenarios.length, examples: c.examples.length, byType, assumptions, questions } };
+  // basis of every rule (Căn cứ): where it comes from
+  const basis = { 'trả lời': 0, 'quyết định': 0, 'tài liệu': 0, 'code': 0, 'tri thức': 0, 'giả định': 0 };
+  const rows = specRules(text);
+  if (rows.length && rows[0].basis === null) warnings.push('bảng luật chưa có cột "Căn cứ" (spec cũ): thêm căn cứ cho từng luật');
+  else if (rows.length) {
+    const qIds = new Set(discoveries().flatMap((d) => [...d.ids]));
+    const gds = new Set([...section('Giả định').matchAll(/\bGĐ-\d{2,3}\b/g)].map((m) => m[0]));
+    const decStatus = new Map(decisions().map((d) => [(d.title.match(/^D-\d+/) || [])[0], d]));
+    for (const r of rows) {
+      const tags = [...r.basis.matchAll(/\[([^\]]+)\]/g)].map((m) => m[1].trim());
+      const ok = tags.filter((g) => /^(TL|CODE|KB)\b/.test(g) || /^GĐ-\d{2,3}$/.test(g) || /^[A-Z]{2,5}-Q\d{2,3}$/.test(g) || /^D-\d{2,3}$/.test(g));
+      if (!ok.length) { errors.push(`${r.id}: thiếu Căn cứ ([<CAP>-Qnn], [TL …], [CODE …], [KB …], [D-xx] hoặc [GĐ-nn])`); continue; }
+      for (const g of ok) {
+        if (/^[A-Z]{2,5}-Q\d/.test(g) && !qIds.has(g)) errors.push(`${r.id}: căn cứ ${g} không có trong log phỏng vấn nào`);
+        if (/^GĐ-/.test(g) && !gds.has(g)) errors.push(`${r.id}: ${g} chưa liệt kê ở mục Giả định`);
+      }
+      const openD = ok.some((g) => /^D-/.test(g) && decStatus.get(g) && isOpen(decStatus.get(g)));
+      const kind = ok.some((g) => /^GĐ-/.test(g)) || openD ? 'giả định' : ok.some((g) => /-Q\d/.test(g)) ? 'trả lời' : ok.some((g) => /^D-/.test(g)) ? 'quyết định' : ok.some((g) => /^TL/.test(g)) ? 'tài liệu' : ok.some((g) => /^CODE/.test(g)) ? 'code' : 'tri thức';
+      basis[kind]++;
+    }
+    const pct = Math.round((100 * basis['giả định']) / rows.length);
+    const max = cfg.elicit?.max_assumption_percent ?? 30;
+    if (pct > max) warnings.push(`${pct}% luật đang dựa trên giả định (> ${max}%): hỏi thêm trước khi duyệt`);
+  }
+  if (c.code && !discoveries().some((d) => d.code === c.code)) warnings.push(`chưa có log phỏng vấn cho ${c.code} (product/discovery/<chủ-đề>/interview.md)`);
+  return { errors, warnings, stats: { lines, rules: c.rules.length, scenarios: c.scenarios.length, examples: c.examples.length, byType, assumptions, questions, basis } };
 }
 function specLint() {
   const only = args[0];
@@ -529,6 +594,8 @@ function specLint() {
     report.push({ cap: c.code, slug: c.slug, ...r });
     const t = r.stats.byType;
     console.log(`\n${c.code || c.slug} · ${r.stats.rules} luật · ${r.stats.scenarios} kịch bản · ${r.stats.examples} ví dụ (thường ${t['thường']}, biên ${t['biên']}, âm ${t['âm']}, tổ hợp ${t['tổ hợp']}${t['?'] ? `, chưa phân loại ${t['?']}` : ''}) · ${r.stats.assumptions} giả định · ${r.stats.questions} câu hỏi mở · ${r.stats.lines} dòng`);
+    const b = r.stats.basis;
+    if (Object.values(b).some(Boolean)) console.log(`  căn cứ: ${Object.entries(b).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
     for (const e of r.errors) console.log(`  ✗ ${e}`);
     for (const w of r.warnings) console.log(`  ! ${w}`);
     if (!r.errors.length && !r.warnings.length) console.log('  ✓ sạch');
@@ -547,15 +614,28 @@ function cardDetails(file) {
   const rec = sec('Khuyến nghị').split('\n')[0].trim();
   return { title: (t.match(/^#\s+(.+)$/m) || [])[1] || path.basename(file), options, rec, dflt: field('Mặc định đang dùng') || field('Mặc định'), blocks: field('Chặn'), affects: field('Ảnh hưởng'), who: field('Người quyết') };
 }
+function clientItems() {
+  const cards = decisions().filter((d) => isOpen(d) && /ask|hỏi/i.test(d.kind)).map((d) => ({ ...cardDetails(d.file), file: d.file, id: (d.title.match(/^D-\d+/) || [])[0] }));
+  const fromInterviews = discoveries().flatMap((d) => d.tree.filter((q) => q.mark === '?').map((q) => ({ id: q.id, title: `${q.id} · ${q.text.replace(/^[·:\-\s]+/, '')}`, options: [], rec: '', dflt: (q.text.match(/mặc định:\s*(.*)$/i) || [])[1] || '', blocks: '', affects: '', file: d.file })));
+  return [...cards, ...fromInterviews];
+}
+function clientCoverage() {
+  const items = clientItems();
+  const f = 'product/client-questions.md';
+  if (!items.length) return [];
+  if (!fs.existsSync(f)) return [`${items.length} câu hỏi khách chưa có trong ${f} (phiếu tiếng ${cfg.client_language || 'en'})`];
+  const t = read(f);
+  const missing = items.filter((x) => x.id && !t.includes(x.id)).map((x) => x.id);
+  return missing.length ? [`${f} chưa có: ${missing.join(', ')}`] : [];
+}
 function questions() {
-  const open = decisions().filter((d) => isOpen(d) && /ask|hỏi/i.test(d.kind));
-  const rows = open.map((d) => ({ ...cardDetails(d.file), file: d.file }));
+  const rows = clientItems();
   const blocking = (r) => r.blocks && !NOT_BLOCKING.test(r.blocks);
   rows.sort((a, b) => Number(blocking(b)) - Number(blocking(a)));
   const out = ['# Câu hỏi cho khách', '', `> Tự sinh bởi \`flow.mjs questions\` lúc ${local(now())} từ các thẻ quyết định loại "ask client". Không sửa tay: sửa thẻ D-xx.`, '',
-    rows.length ? `${rows.length} câu, ${rows.filter(blocking).length} câu đang chặn việc. Mỗi câu có phương án và đề xuất của chúng tôi; khách chỉ cần chọn hoặc sửa. Khi chưa trả lời, đội làm tiếp theo cột "Đang dùng tạm".` : 'Không có câu hỏi nào đang mở.', ''];
+    rows.length ? `${rows.length} câu (thẻ quyết định và phỏng vấn), ${rows.filter(blocking).length} câu đang chặn việc. Bản gửi khách: \`product/client-questions.md\`. Mỗi câu có phương án và đề xuất của chúng tôi; khách chỉ cần chọn hoặc sửa. Khi chưa trả lời, đội làm tiếp theo cột "Đang dùng tạm".` : 'Không có câu hỏi nào đang mở.', ''];
   rows.forEach((r, i) => {
-    out.push(`## ${i + 1}. ${r.title.replace(/^D-\d+\s*·\s*/, '')}`, '', `- Thẻ: \`${r.file}\`${r.affects ? ` · Ảnh hưởng: ${r.affects}` : ''}${blocking(r) ? ` · **Đang chặn:** ${r.blocks}` : ''}`);
+    out.push(`## ${i + 1}. ${r.title.replace(/^D-\d+\s*·\s*/, '')}`, '', `- ${r.id ? `${r.id} · ` : ''}Nguồn: \`${r.file}\`${r.affects ? ` · Ảnh hưởng: ${r.affects}` : ''}${blocking(r) ? ` · **Đang chặn:** ${r.blocks}` : ''}`);
     for (const o of r.options) out.push(`- ${o}`);
     if (r.rec) out.push(`- **Đề xuất:** ${r.rec}`);
     if (r.dflt) out.push(`- **Đang dùng tạm:** ${r.dflt}`);
@@ -563,6 +643,7 @@ function questions() {
   });
   write('product/questions.md', out.join('\n'));
   console.log(`Wrote product/questions.md (${rows.length} câu)`);
+  for (const m of clientCoverage()) console.log(`  ! ${m}`);
 }
 
 // ---------- review pack ----------
@@ -584,7 +665,8 @@ async function reviewPack() {
   }
   const order = [];
   const add = (f, group) => { if (fs.existsSync(f) && !order.some((o) => o.f === f)) order.push({ f, group }); };
-  add('product/map.md', 'Tổng quan'); add('product/questions.md', 'Tổng quan'); add('product/context.md', 'Tổng quan');
+  add('product/map.md', 'Tổng quan'); add('product/client-questions.md', 'Tổng quan'); add('product/questions.md', 'Tổng quan'); add('product/context.md', 'Tổng quan');
+  for (const d of discoveries()) { add(d.file, 'Phỏng vấn'); add(path.join('product/discovery', d.slug, 'story-map.md'), 'Phỏng vấn'); }
   for (const c of capabilities()) { add(path.join(c.dir, 'examples.md'), 'Spec'); add(path.join(c.dir, 'spec.md'), 'Spec'); }
   const decs = decisions().sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)));
   for (const d of decs) add(d.file, 'Quyết định');
@@ -597,7 +679,7 @@ async function reviewPack() {
   const open = decs.filter(isOpen);
   const exTotal = caps.reduce((a, c) => a + c.examples.length, 0);
   const lint = caps.map((c) => ({ c, r: lintCap(c) }));
-  const lintHtml = lint.length ? `<table><thead><tr><th>Năng lực</th><th>Luật</th><th>Ví dụ (thường / biên / âm / tổ hợp)</th><th>Giả định</th><th>Câu hỏi mở</th><th>Lỗi</th><th>Cảnh báo</th></tr></thead><tbody>${lint.map(({ c, r }) => `<tr><td>${esc(c.title)}</td><td>${r.stats.rules}</td><td>${r.stats.examples} (${r.stats.byType['thường']} / ${r.stats.byType['biên']} / ${r.stats.byType['âm']} / ${r.stats.byType['tổ hợp']})</td><td>${r.stats.assumptions}</td><td>${r.stats.questions}</td><td>${r.errors.length}</td><td>${r.warnings.length ? esc(r.warnings.join('; ')) : '0'}</td></tr>`).join('')}</tbody></table>` : '';
+  const lintHtml = lint.length ? `<table><thead><tr><th>Năng lực</th><th>Luật</th><th>Ví dụ (thường / biên / âm / tổ hợp)</th><th>Căn cứ của luật</th><th>Giả định</th><th>Câu hỏi mở</th><th>Lỗi</th><th>Cảnh báo</th></tr></thead><tbody>${lint.map(({ c, r }) => `<tr><td>${esc(c.title)}</td><td>${r.stats.rules}</td><td>${r.stats.examples} (${r.stats.byType['thường']} / ${r.stats.byType['biên']} / ${r.stats.byType['âm']} / ${r.stats.byType['tổ hợp']})</td><td>${esc(Object.entries(r.stats.basis).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') || '-')}</td><td>${r.stats.assumptions}</td><td>${r.stats.questions}</td><td>${r.errors.length}</td><td>${r.warnings.length ? esc(r.warnings.join('; ')) : '0'}</td></tr>`).join('')}</tbody></table>` : '';
   const sections = order.map(({ f, group }, i) => ({ id: `s${i}`, f: rel(f), group, title: (read(f).match(/^#\s+(.+)$/m) || [])[1] || rel(f), html: md2html(read(f)), changed: changed.has(rel(f)) }));
   const nav = [...new Set(sections.map((s) => s.group))].map((g) => `<div class="g">${esc(g)}</div>` + sections.filter((s) => s.group === g).map((s) => `<a href="#${s.id}">${s.changed ? '<b class="new">mới</b> ' : ''}${esc(s.title)}</a>`).join('')).join('');
   const uxIndex = fs.existsSync('product/ux/options/index.html') ? '<p>Phương án UI: <a href="../../product/ux/options/index.html">product/ux/options/index.html</a></p>' : '';
@@ -606,7 +688,7 @@ async function reviewPack() {
 <header><h1>Review pack · ${esc(cfg.project || path.basename(base))}</h1>
 <p class="meta">Sinh lúc ${esc(local(now()))}${approved ? ` · phần <b class="new">mới</b> là thay đổi sau lần duyệt ${esc(local(approved.at))}` : ' · lần đầu, chưa có mốc duyệt'}</p>
 <div class="cards"><div><b>${caps.length}</b>năng lực có spec</div><div><b>${exTotal}</b>ví dụ cần kiểm</div><div><b>${open.length}</b>quyết định đang mở</div><div><b>${changed.size}</b>file đổi từ lần duyệt trước</div></div>
-<p class="hint">Cách đọc: xem <i>Bản đồ sản phẩm</i> và <i>Câu hỏi cho khách</i>, rồi bảng <i>Ví dụ</i> của từng năng lực trước phần luật (sai dòng nào ghi lại mã dòng đó), rồi các <i>Quyết định</i> đang mở. Checklist cổng: <code>.flow/templates/gates.md</code>.</p>${lintHtml ? `<h3>Chất lượng spec (spec-lint)</h3>${lintHtml}` : ''}${uxIndex}</header>
+<p class="hint">Cách đọc: xem <i>Bản đồ sản phẩm</i>, <i>Câu hỏi cho khách</i> và phần <i>Hiểu biết chung</i> của log phỏng vấn, rồi bảng <i>Ví dụ</i> của từng năng lực trước phần luật (sai dòng nào ghi lại mã dòng đó), rồi các <i>Quyết định</i> đang mở. Checklist cổng: <code>.flow/templates/gates.md</code>.</p>${lintHtml ? `<h3>Chất lượng spec (spec-lint)</h3>${lintHtml}` : ''}${uxIndex}</header>
 ${sections.map((s) => `<section id="${s.id}" class="${s.changed ? 'changed' : ''}"><div class="path">${esc(s.f)}${s.changed ? ' · <b class="new">mới / đổi</b>' : ''}</div>${s.html}</section>`).join('\n')}
 </main><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true});</script></body></html>`;
   write('work/review-pack/index.html', html);
@@ -781,6 +863,7 @@ function liveLines() {
   const L = [];
   L.push(`◆ ${cfg.project || path.basename(base)} · ${s.recipe || 'chưa bắt đầu'} › ${s.phase || '-'}${sum.slices?.total ? ` · slice ${sum.slices.done}/${sum.slices.total}${sum.current ? ` (đang: ${sum.current})` : ''}` : ''}`);
   if (usage?.five_hour != null) L.push(`  Claude 5h: ${Math.round(usage.five_hour)}%${usage.resets_at ? ` (reset ${new Date(usage.resets_at * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})` : ''}${usage.seven_day != null ? ` · 7 ngày: ${Math.round(usage.seven_day)}%` : ''}`);
+  if (sum.req) L.push(`  Requirement: ${sum.req}`);
   L.push(`  Cần bạn: ${sum.needYou || 0}${sum.blocking ? ` (⛔ ${sum.blocking} chặn)` : ''} · vấn đề check: ${sum.checks || 0}`);
   const ag = agentFiles();
   const runningAg = ag.filter((a) => a.status === 'running');
@@ -902,6 +985,6 @@ function clean() {
 }
 
 // ---------- dispatch (last, so every const above is initialised) ----------
-const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, clean, 'review-pack': reviewPack, 'spec-lint': specLint, questions, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
-if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 25).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+const commands = { start, phase, gate, board, check, examples, trace, freeze, effort, shots, run, jobs, logs, watch, timeline, doctor, 'resume-report': resumeReport, clean, 'review-pack': reviewPack, 'spec-lint': specLint, questions, elicit, state: () => console.log(JSON.stringify(readJson(P.state, {}), null, 2)) };
+if (!commands[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 26).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 await commands[cmd]();

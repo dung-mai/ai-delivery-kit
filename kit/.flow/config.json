@@ -1,5 +1,12 @@
 {
   "language": "vi",
+  "client_language": "en",
+  "elicit": {
+    "first_question_minutes": 2,
+    "max_questions_per_round": 7,
+    "max_rounds": 4,
+    "max_assumption_percent": 30
+  },
   "project": "my-project",
   "roles": {
     "research": "claude",

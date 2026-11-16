@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Install or update AI Delivery Kit v3 into a project folder.
+// Install or update AI Delivery Kit v4 into a project folder.
 //
 //   node install.mjs <target-folder> [--project <name>] [--update]
 //
@@ -54,10 +54,18 @@ if (update) {
   const kh = kitSettings.hooks || {};
   const newHooks = Object.keys(kh).filter((ev) => !(st.hooks || {})[ev]);
   if (!st.statusLine && kitSettings.statusLine) { st.statusLine = kitSettings.statusLine; console.log('settings.json: added statusLine'); }
+  const envAdd = Object.entries(kitSettings.env || {}).filter(([k]) => !(k in (st.env || {})));
+  if (envAdd.length) { st.env = { ...(st.env || {}), ...Object.fromEntries(envAdd) }; console.log(`settings.json: env ${envAdd.map(([k]) => k).join(', ')}`); }
   const allowAdd = (kitSettings.permissions?.allow || []).filter((x) => !(st.permissions?.allow || []).includes(x));
   if (allowAdd.length) { st.permissions = { ...(st.permissions || {}), allow: [...(st.permissions?.allow || []), ...allowAdd] }; console.log(`settings.json: allowed ${allowAdd.join(', ')}`); }
   if (newHooks.length) { st.hooks = { ...(st.hooks || {}), ...Object.fromEntries(newHooks.map((ev) => [ev, kh[ev]])) }; console.log(`settings.json: added hooks ${newHooks.join(', ')}`); }
   fs.writeFileSync(sf, JSON.stringify(st, null, 2) + '\n');
+  // the conductor rules are kept as the project's own; say when the kit's version differs so the human can merge
+  for (const f of ['CLAUDE.md', 'AGENTS.md']) {
+    const a = fs.readFileSync(path.join(kit, f), 'utf8');
+    const b = fs.existsSync(path.join(dst, f)) ? fs.readFileSync(path.join(dst, f), 'utf8') : a;
+    if (a !== b) console.log(`${f}: khác bản trong kit (giữ nguyên bản của dự án). So sánh: git diff --no-index ${path.join(kit, f)} ${path.join(dst, f)}`);
+  }
 } else {
   copy(kit, dst, false);
 }
@@ -75,5 +83,5 @@ const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
 const add = want.filter((l) => !cur.split('\n').includes(l));
 if (add.length) fs.appendFileSync(gi, (cur && !cur.endsWith('\n') ? '\n' : '') + add.join('\n') + '\n');
 
-console.log(`${update ? 'Updated' : 'Installed'} AI Delivery Kit v3 in ${dst}: ${copied} file copied, ${kept} kept.`);
+console.log(`${update ? 'Updated' : 'Installed'} AI Delivery Kit v4 in ${dst}: ${copied} file copied, ${kept} kept.`);
 console.log('Next: open Claude Code in that folder and type  /flow "<what you want to build>"');

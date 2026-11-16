@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Claude Code status line: always-visible flow state under the prompt. Must be fast: reads small JSON files only.
 //   line 1: project · recipe › phase · slice · needs you
-//   line 2: running subagents and jobs · Claude 5h quota · context
+//   line 2 (while a requirement interview is open): topic · step n/6 · round · decided / asking / client
+//   line 3: running subagents and jobs · Claude 5h quota · context
 // Also saves the rate-limit numbers to .flow/state/usage.json so the conductor and `flow.mjs watch` can see them.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -45,4 +46,5 @@ if (five != null) l2.push((five >= 85 ? (s) => c('31', s) : five >= 60 ? (s) => 
 const ctx = input.context_window?.used_percentage;
 if (ctx != null) l2.push(`context ${Math.round(ctx)}%`);
 
-process.stdout.write(l1.join(' · ') + '\n' + l2.join(' · ') + '\n');
+const req = sum.req ? c('35', `▶ Requirement: ${sum.req}`) + '\n' : '';
+process.stdout.write(l1.join(' · ') + '\n' + req + l2.join(' · ') + '\n');

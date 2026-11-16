@@ -1,10 +1,23 @@
-# AI Delivery Kit v3
+# AI Delivery Kit v4
 
 Bộ framework giao việc phần mềm cho AI agent, dùng lại được giữa các dự án. Claude Code điều phối; bạn nói chuyện bình thường hoặc gõ `/flow`; script chỉ giữ luật cứng.
 
 - `kit/` — framework, cài vào dự án bằng `install.mjs`.
 - `pos/` — bài thử đầu tiên: POS greenfield trong khoảng 1 tuần. Mốc effort đã chốt trước khi làm: `pos/product/baseline-effort.md`.
 - `examples/pos-promotions/` — dự án mẫu epic Khuyến mại: lane Requirement (spec, 41 ví dụ, thẻ quyết định, câu hỏi cho khách, knowledge), slice S1 (engine giá + 40 test) và **bộ demo 8 loại việc**: xem `examples/pos-promotions/DEMO.md`.
+
+## v4: lane Requirement là một cuộc hỏi đáp
+
+Làm lại sau góp ý: agent nghĩ lâu rồi chỉ hỏi 1 câu, không thấy đang ở đâu, không rõ spec dựa vào đâu.
+
+1. **Nhận việc** (câu hỏi đầu ≤ 2 phút): bảng căn cứ nhanh; skill `discover` đọc sâu **chạy nền**; vòng 1 hỏi đích, phạm vi, cái không làm.
+2. **Bản đồ** (việc lớn như checkout): luồng người dùng → năng lực, chọn phần làm trước.
+3. **Hỏi theo vòng** (skill `elicit`, kiểu grill-me): 5–7 câu/vòng, mỗi câu có đề xuất, gõ `yes` nhận hết; sự thật agent tự tìm, quyết định hỏi người; trả lời ghi ngay vào `product/discovery/<chủ-đề>/interview.md`; "không biết" → `product/client-questions.md` (tiếng Anh) + mặc định tạm; câu cần nhìn → prototype ≤ 15 phút.
+4. **Đọc lại hiểu biết chung**: chưa xác nhận thì chưa viết spec.
+5. **Viết spec + soi**: mỗi luật có cột **Căn cứ** (`[CHK-Q04]` câu trả lời, `[TL …]` tài liệu, `[CODE …]`, `[KB …]`, `[D-xx]`, `[GĐ-nn]` giả định); `spec-lint` báo luật thiếu căn cứ và tỉ lệ giả định.
+6. **Cổng**: review pack có log hỏi đáp, tỉ lệ căn cứ, phiếu hỏi khách.
+
+Nhìn thấy tiến độ: checklist Claude Code bật sẵn (`Ctrl+T`), dòng `▶ Bước 3/6 · vòng 2 · 6 câu`, status line `▶ Requirement: CHK · bước 3/6 · vòng 2 · chốt 9 · …`, `flow.mjs elicit`. Lệnh: `/flow elicit "<chủ đề>"`.
 
 ## v3: router + 4 lane
 
@@ -32,6 +45,7 @@ Mở Claude Code trong thư mục dự án (terminal, VS Code extension hoặc a
 | `/flow "Làm POS từ tài liệu trong product/source"` | Phân loại việc, chọn công thức, in kế hoạch, hỏi bạn chốt |
 | `/flow` hoặc `/flow status` | Đang ở đâu, cái gì chờ bạn, đã tốn bao nhiêu |
 | `/flow next` | Làm bước kế, dừng ở chỗ cần bạn |
+| `/flow elicit "…"` | Hỏi theo vòng để chốt quyết định trước khi viết spec |
 | `/flow explore "…"` | Câu hỏi chưa biết: chọn cách rẻ nhất (research, POC, prototype, hỏi khách…), có hạn giờ, ra thẻ quyết định |
 | `/flow decide` | Các thẻ quyết định đang mở, kèm phương án và khuyến nghị |
 | `/flow questions` | Danh sách câu hỏi cho khách, gửi được ngay |
@@ -47,11 +61,11 @@ Hoặc cứ nói tự nhiên: "build đang lỗi quyền git, xử lý đi", "ch
 |---|---|---|
 | Conductor | `CLAUDE.md`, skill `flow` | Phiên chính: đọc trạng thái, chọn công thức, giao việc, hỏi bạn ở điểm quyết định |
 | Chuyên gia | `.claude/agents/` | researcher, ba, spec-critic, architect, ux, qa, reviewer: mỗi vai một ngữ cảnh, tool giới hạn |
-| Khối | `.claude/skills/` | triage (router), discover, define, explore, research, decide, knowledge, ux-options, architect, plan, conventions, build, build-codex, delegate, verify, change, review-pack, retro |
+| Khối | `.claude/skills/` | triage (router), elicit, discover, define, explore, research, decide, knowledge, ux-options, architect, plan, conventions, build, build-codex, delegate, verify, change, review-pack, retro |
 | Route | `.flow/recipes/` | quick, bug, change, feature, epic, explore, greenfield |
 | Template | `.flow/templates/` | bối cảnh, bản đồ, spec, bảng ví dụ, thẻ quyết định, research, kiến trúc, ADR, slice, change, review |
 | Guard | `.flow/hooks/` | chặn sửa file đã chốt và `.env`, chặn lệnh nguy hiểm, format/lint file vừa sửa, chạy check khi dừng, đo token và giờ người, thông báo |
-| Sensor | `.flow/sensors/flow.mjs` | board, check, spec-lint, questions, examples, trace, freeze, effort, review-pack, shots, run, watch, doctor |
+| Sensor | `.flow/sensors/flow.mjs` | board, check, elicit, spec-lint, questions, examples, trace, freeze, effort, review-pack, shots, run, watch, doctor |
 | Sự thật sản phẩm | `product/` | context, map, specs, decisions, questions, changes, research, ux, architecture, plan |
 | Tri thức | `knowledge/` | domain, law, hard-cases, integrations, glossary |
 | Trạng thái | `work/`, `.flow/state/` | BOARD.md, sổ effort, review, bằng chứng |

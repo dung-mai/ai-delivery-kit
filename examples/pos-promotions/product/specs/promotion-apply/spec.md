@@ -11,23 +11,23 @@ Nguồn: handover §2 ("best-deal"), §5 (snapshot, số nguyên); `knowledge/ha
 | Khách hàng | xem dòng giảm giá trên màn hình khách và biên lai | |
 
 ## Luật
-| Mã | Khi | Thì | Ghi chú / nguồn |
-|---|---|---|---|
-| STK-R01 | Tính giỏ hàng | Áp khuyến mại theo món (5 loại đầu của PRM-R01) trước, rồi khuyến mại theo ngưỡng giỏ hàng | |
-| STK-R02 | Đọc khuyến mại | Mỗi khuyến mại là độc quyền hoặc cộng dồn | D-01 |
-| STK-R03 | Một đơn vị hàng được áp khuyến mại độc quyền | Không áp khuyến mại theo món nào khác cho đơn vị đó | D-01 |
-| STK-R04 | Nhiều khuyến mại % cộng dồn trên cùng đơn vị hàng | Áp lần lượt theo độ ưu tiên; mỗi % tính trên giá đã giảm bởi khuyến mại trước | D-02 |
-| STK-R05 | Có nhiều phương án loại trừ nhau cho cùng nhóm đơn vị hàng (một khuyến mại độc quyền, hoặc tập khuyến mại cộng dồn) | Chọn phương án có tổng giảm lớn nhất cho khách trên nhóm đơn vị mà các khuyến mại tranh nhau; bằng nhau thì độ ưu tiên cao hơn (số nhỏ hơn); vẫn bằng thì khuyến mại duyệt trước | D-01, D-08; "best-deal" handover §2 |
-| STK-R06 | Xét ngưỡng giỏ hàng | Tiền tính ngưỡng = tổng sau khuyến mại theo món; đạt khi ≥ ngưỡng | D-06 |
-| STK-R07 | Có khoản giảm cấp combo hoặc cấp giỏ hàng | Chia về các dòng theo tỉ lệ tiền sau giảm của dòng; mỗi phần làm tròn theo STK-R08; phần dư dồn vào dòng có tiền lớn nhất, bằng nhau thì dòng quét trước | cần cho trả hàng, báo cáo thuế |
-| STK-R08 | Làm tròn một khoản giảm | Làm tròn nửa lên tới 1 satang (0,5 satang → lên) | D-04 |
-| STK-R09 | Tổng giảm của một dòng lớn hơn tiền dòng | Giảm tối đa bằng tiền dòng; tiền dòng sau giảm không âm | PRM-R10 |
-| STK-R10 | Thêm / bớt món, nhận diện khách, hay đổi số lượng trước khi thanh toán | Tính lại toàn bộ giỏ; màn hình thu ngân và màn hình khách hiện kết quả mới | |
-| STK-R11 | Tính VAT của giao dịch | VAT = tổng sau mọi giảm giá × t / (100 + t), t lấy từ cấu hình theo ngày bán; làm tròn theo STK-R08 một lần trên tổng hoá đơn | giá đã gồm VAT; Section 79; D-04 |
-| STK-R12 | Xét hiệu lực khuyến mại | Thời điểm xét là lúc thu ngân bấm tổng; mọi khuyến mại xét lại tại thời điểm đó | D-03 |
-| STK-R13 | In biên lai | Mỗi dòng có khuyến mại in tên khuyến mại (TH) và số tiền giảm; tổng ABB là tổng sau giảm | ABB không bắt buộc ghi giảm giá; khách thấy rõ hơn |
-| STK-R14 | Máy POS mất kết nối | Dùng bộ khuyến mại đồng bộ gần nhất, xét giờ theo đồng hồ máy; giao dịch ghi mã bộ khuyến mại | D-07 |
-| STK-R15 | Nhiều khuyến mại theo ngưỡng giỏ hàng cùng đạt | Chỉ áp một, chọn cái giảm nhiều nhất; bằng nhau theo STK-R05 | D-01 |
+| Mã | Khi | Thì | Căn cứ | Ghi chú |
+|---|---|---|---|---|
+| STK-R01 | Tính giỏ hàng | Áp khuyến mại theo món (5 loại đầu của PRM-R01) trước, rồi khuyến mại theo ngưỡng giỏ hàng | [KB hard-cases/promo-stacking.md] |  |
+| STK-R02 | Đọc khuyến mại | Mỗi khuyến mại là độc quyền hoặc cộng dồn | [D-01] | D-01 |
+| STK-R03 | Một đơn vị hàng được áp khuyến mại độc quyền | Không áp khuyến mại theo món nào khác cho đơn vị đó | [D-01] | D-01 |
+| STK-R04 | Nhiều khuyến mại % cộng dồn trên cùng đơn vị hàng | Áp lần lượt theo độ ưu tiên; mỗi % tính trên giá đã giảm bởi khuyến mại trước | [D-02] | D-02 |
+| STK-R05 | Có nhiều phương án loại trừ nhau cho cùng nhóm đơn vị hàng (một khuyến mại độc quyền, hoặc tập khuyến mại cộng dồn) | Chọn phương án có tổng giảm lớn nhất cho khách trên nhóm đơn vị mà các khuyến mại tranh nhau; bằng nhau thì độ ưu tiên cao hơn (số nhỏ hơn); vẫn bằng thì khuyến mại duyệt trước | [D-01] [D-08] [TL pos-system-handover.md §2] | D-01, D-08; "best-deal" handover §2 |
+| STK-R06 | Xét ngưỡng giỏ hàng | Tiền tính ngưỡng = tổng sau khuyến mại theo món; đạt khi ≥ ngưỡng | [D-06] | D-06 |
+| STK-R07 | Có khoản giảm cấp combo hoặc cấp giỏ hàng | Chia về các dòng theo tỉ lệ tiền sau giảm của dòng; mỗi phần làm tròn theo STK-R08; phần dư dồn vào dòng có tiền lớn nhất, bằng nhau thì dòng quét trước | [KB hard-cases/promo-stacking.md] [GĐ-03] | cần cho trả hàng, báo cáo thuế |
+| STK-R08 | Làm tròn một khoản giảm | Làm tròn nửa lên tới 1 satang (0,5 satang → lên) | [D-04] | D-04 |
+| STK-R09 | Tổng giảm của một dòng lớn hơn tiền dòng | Giảm tối đa bằng tiền dòng; tiền dòng sau giảm không âm | [GĐ-06] | PRM-R10 |
+| STK-R10 | Thêm / bớt món, nhận diện khách, hay đổi số lượng trước khi thanh toán | Tính lại toàn bộ giỏ; màn hình thu ngân và màn hình khách hiện kết quả mới | [GĐ-07] |  |
+| STK-R11 | Tính VAT của giao dịch | VAT = tổng sau mọi giảm giá × t / (100 + t), t lấy từ cấu hình theo ngày bán; làm tròn theo STK-R08 một lần trên tổng hoá đơn | [KB law/th-vat-discount.md] [GĐ-01] [D-04] | giá đã gồm VAT; Section 79; D-04 |
+| STK-R12 | Xét hiệu lực khuyến mại | Thời điểm xét là lúc thu ngân bấm tổng; mọi khuyến mại xét lại tại thời điểm đó | [D-03] | D-03 |
+| STK-R13 | In biên lai | Mỗi dòng có khuyến mại in tên khuyến mại (TH) và số tiền giảm; tổng ABB là tổng sau giảm | [KB law/th-vat-discount.md] [GĐ-05] | ABB không bắt buộc ghi giảm giá; khách thấy rõ hơn |
+| STK-R14 | Máy POS mất kết nối | Dùng bộ khuyến mại đồng bộ gần nhất, xét giờ theo đồng hồ máy; giao dịch ghi mã bộ khuyến mại | [D-07] [TL pos-system-handover.md §3] | D-07 |
+| STK-R15 | Nhiều khuyến mại theo ngưỡng giỏ hàng cùng đạt | Chỉ áp một, chọn cái giảm nhiều nhất; bằng nhau theo STK-R05 | [D-01] | D-01 |
 
 ## Kịch bản
 - **STK-S01** [auto] Given Dầu gội có khuyến mại độc quyền −10% và khuyến mại thành viên −5% cộng dồn When khách thành viên mua 1 Dầu gội Then chỉ áp −10% (giảm 15,90).
@@ -60,11 +60,13 @@ Không có vòng đời riêng; giỏ hàng tính lại mỗi khi đổi (STK-R1
 Nhóm khách (thành viên / thường) · trạng thái máy (online / offline) · thuế suất theo ngày bán.
 
 ## Giả định
-- Giá bán lẻ đã gồm VAT.
-- Mua X tặng Y tặng món rẻ nhất trong phạm vi (PRM-R01).
-- Thứ tự quét dùng để phân xử khi chia phần dư (STK-R07).
-- Best deal so sánh trên từng nhóm đơn vị hàng mà các khuyến mại tranh nhau, không tìm phương án lợi nhất cho cả giỏ khi các nhóm chồng chéo (D-08, SA chốt ở cổng thiết kế).
-- Biên lai in dòng giảm giá dù ABB không bắt buộc (STK-R13).
+- GĐ-01 · Giá bán lẻ đã gồm VAT.
+- GĐ-02 · Mua X tặng Y tặng món rẻ nhất trong phạm vi (PRM-R01).
+- GĐ-03 · Thứ tự quét dùng để phân xử khi chia phần dư (STK-R07).
+- GĐ-04 · Best deal so sánh trên từng nhóm đơn vị hàng mà các khuyến mại tranh nhau, không tìm phương án lợi nhất cho cả giỏ khi các nhóm chồng chéo (D-08, SA chốt ở cổng thiết kế).
+- GĐ-05 · Biên lai in dòng giảm giá dù ABB không bắt buộc (STK-R13).
+- GĐ-06 · Tiền dòng sau giảm không âm.
+- GĐ-07 · Đổi giỏ hoặc nhận diện khách thì tính lại toàn bộ giỏ.
 
 ## Câu hỏi mở
 - D-01 · Cộng dồn và chọn khuyến mại · đề xuất: độc quyền / cộng dồn + best deal · đang dùng: như đề xuất.

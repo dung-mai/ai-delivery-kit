@@ -91,5 +91,12 @@
     "review_every": 1,
     "stop_at_5h_percent": 85,
     "_note": "/flow autopilot runs all remaining slices back to back. gates: end = one batch review at the end; each = stop after every slice."
+  },
+  "client_language": "en",
+  "elicit": {
+    "first_question_minutes": 2,
+    "max_questions_per_round": 7,
+    "max_rounds": 4,
+    "max_assumption_percent": 30
   }
 }

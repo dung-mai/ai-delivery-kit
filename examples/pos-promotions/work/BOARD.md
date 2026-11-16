@@ -1,6 +1,6 @@
 # BOARD — pos-promotions
 
-_Tự sinh bởi `flow.mjs board` lúc 09:52:20 12/11/2026. Không sửa tay._
+_Tự sinh bởi `flow.mjs board` lúc 14:08:44 16/11/2026. Không sửa tay._
 
 ## Đang ở đâu
 - Công thức: **epic** · Bước: **S2** · Mục tiêu: Epic Khuyến mại (POS, khách Thái Lan)
@@ -19,6 +19,9 @@ _Tự sinh bởi `flow.mjs board` lúc 09:52:20 12/11/2026. Không sửa tay._
 
 ## Cần bạn
 - 6 câu hỏi cho khách: D-01, D-02, D-03, D-04, D-05, D-06
+
+## Requirement
+- (chưa có phỏng vấn: `/flow elicit "<chủ đề>"`)
 
 ## Năng lực
 | Mã | Năng lực | Độ sâu | Luật | Kịch bản | Ví dụ | Có test |

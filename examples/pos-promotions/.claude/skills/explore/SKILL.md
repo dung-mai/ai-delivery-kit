@@ -5,7 +5,7 @@ description: Answers an open question that blocks a spec or a design by the chea
 
 # Explore
 
-Explore is not a separate lane. Any lane calls it when it meets an unknown; only the step that needs the answer waits.
+Explore is not a separate lane. Any lane calls it when it meets an unknown; only the step that needs the answer waits. During an elicit interview, questions the human can answer are asked there; explore is for the ones that need research, a POC, a prototype or the client.
 
 ## 1. Frame (before any work)
 Open or update `product/decisions/D-<nn>-<slug>.md` (decide skill format) with: the question in one sentence, what it blocks (step, capability ids), the mode, the timebox, and what answer would change what.
@@ -18,7 +18,7 @@ Open or update `product/decisions/D-<nn>-<slug>.md` (decide skill format) with: 
 | research | how others do it, standards, law | researcher subagents in parallel (research skill) | ≤ ½ day | `product/research/R-<nn>-*.md` with sources |
 | POC | can it work, how fast, what limits | Codex job in `spikes/<slug>/` | ≤ 2 days | yes / no / yes-if, measured numbers; spike code is never merged |
 | prototype | people will only know when they see it | ux subagent | ≤ 1 day | 2–3 clickable options in `product/ux/` |
-| ask client | business, scope, money or legal choice only the client can make | PO via the question list | batched weekly | entry in `product/questions.md` with our recommendation and the default we use meanwhile |
+| ask client | business, scope, money or legal choice only the client can make | PO via the client questionnaire | batched weekly | entry in `product/client-questions.md` (client language) with our recommendation and the default we use meanwhile |
 
 Rules:
 - Check `knowledge/` first (knowledge skill); half the "research" questions are already answered there.

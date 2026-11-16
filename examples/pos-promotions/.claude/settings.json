@@ -98,5 +98,8 @@
     "type": "command",
     "command": "node \"$CLAUDE_PROJECT_DIR/.flow/hooks/statusline.mjs\"",
     "refreshInterval": 5
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1"
   }
 }

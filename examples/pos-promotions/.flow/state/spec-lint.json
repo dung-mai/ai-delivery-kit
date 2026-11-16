@@ -1,13 +1,16 @@
 {
-  "at": "2026-11-12T02:51:08.488Z",
+  "at": "2026-11-16T07:08:02.949Z",
   "report": [
     {
       "cap": "STK",
       "slug": "promotion-apply",
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        "87% luật đang dựa trên giả định (> 30%): hỏi thêm trước khi duyệt",
+        "chưa có log phỏng vấn cho STK (product/discovery/<chủ-đề>/interview.md)"
+      ],
       "stats": {
-        "lines": 80,
+        "lines": 82,
         "rules": 15,
         "scenarios": 7,
         "examples": 18,
@@ -18,17 +21,28 @@
           "tổ hợp": 2,
           "?": 0
         },
-        "assumptions": 5,
-        "questions": 7
+        "assumptions": 7,
+        "questions": 7,
+        "basis": {
+          "trả lời": 0,
+          "quyết định": 1,
+          "tài liệu": 0,
+          "code": 0,
+          "tri thức": 1,
+          "giả định": 13
+        }
       }
     },
     {
       "cap": "PRM",
       "slug": "promotion-definition",
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        "42% luật đang dựa trên giả định (> 30%): hỏi thêm trước khi duyệt",
+        "chưa có log phỏng vấn cho PRM (product/discovery/<chủ-đề>/interview.md)"
+      ],
       "stats": {
-        "lines": 88,
+        "lines": 92,
         "rules": 12,
         "scenarios": 6,
         "examples": 23,
@@ -39,8 +53,16 @@
           "tổ hợp": 3,
           "?": 0
         },
-        "assumptions": 3,
-        "questions": 2
+        "assumptions": 7,
+        "questions": 2,
+        "basis": {
+          "trả lời": 0,
+          "quyết định": 0,
+          "tài liệu": 3,
+          "code": 0,
+          "tri thức": 4,
+          "giả định": 5
+        }
       }
     }
   ]

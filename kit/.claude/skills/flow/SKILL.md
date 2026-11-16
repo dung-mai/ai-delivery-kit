@@ -1,6 +1,6 @@
 ---
 name: flow
-description: Entry point of the AI delivery flow. Use when the user types /flow (start, status, next, change, explore, decide, questions, effort, pack, resume, autopilot) or asks to start, continue or check a piece of work in this repo.
+description: Entry point of the AI delivery flow. Use when the user types /flow (start, status, next, elicit, change, explore, decide, questions, effort, pack, resume, autopilot) or asks to start, continue or check a piece of work in this repo.
 ---
 
 # /flow — conduct the delivery flow
@@ -10,7 +10,8 @@ Arguments: `$ARGUMENTS` (may be empty). Read `work/BOARD.md` and `.flow/state/fl
 ## Sub-commands
 | Input | Do |
 |---|---|
-| `"<request>"` or `start "<request>"` | Run the **triage** skill (the router): pick the route, show the plan in ≤ 6 lines. quick / bug / feature start right away; epic / change / greenfield ask once to confirm. |
+| `"<request>"` or `start "<request>"` | Run the **triage** skill (the router). quick / bug start right away; feature / epic / greenfield go straight into **elicit** (first question within 2 minutes). |
+| `elicit "<topic>"` | **elicit** skill on any topic: interview in rounds, log, shared understanding, then define. |
 | `status` (or empty) | `node .flow/sensors/flow.mjs board`, then summarise: recipe, phase, running jobs/subagents, what needs the human, effort and Claude 5h usage. ≤ 8 lines. |
 | `next` | Do the next step(s) of the current recipe until an output exists or a gate/decision needs the human. |
 | `change "<what changed>"` | **change** skill. |
@@ -35,7 +36,12 @@ Waiting is the biggest cost. Start independent work together and do your own wor
 Only sequence what really depends on an output. Never let two writers touch the same files.
 
 ## Lanes and routes
-Lanes: 1 requirement (discover, define, spec critic) · 2 design (architect, ux-options, plan) · 3 build (build, qa tests, verify) · 4 test (test pack, triage, UAT support). A route says which of their steps run. Explore is not a lane: any step calls it when it meets an unknown, and only that step waits. Gate checklists: `.flow/templates/gates.md`.
+Lanes: 1 requirement (elicit with discover in the background, define, spec critic) · 2 design (architect, ux-options, plan) · 3 build (build, qa tests, verify) · 4 test (test pack, triage, UAT support). A route says which of their steps run. Explore is not a lane: any step calls it when it meets an unknown, and only that step waits. Gate checklists: `.flow/templates/gates.md`.
+
+## Talk to the human
+- Requirement work (lane 1) is a conversation: ask the key decisions early, in rounds, with recommendations (elicit skill). Never collect them silently for the end.
+- Everywhere: before each step print one line `▶ <step> · <what> · <progress>`; keep the task checklist current; never stay silent more than 2 minutes while something runs (say what is running and what it will answer).
+- Build, test and autopilot (lanes 3–4) still stop only at gates and blocking cards.
 
 ## Step loop
 1. Find the current step in `.flow/recipes/<recipe>.md`; check its inputs exist.
@@ -70,5 +76,5 @@ Regenerate the review pack so the reviewer reads one HTML/PDF. Ask with options:
 
 ## Never
 - Start the next gated step without the approval recorded.
-- Ask the human things you can find in the repo, research or decisions.
+- Ask the human things you can find in the repo, research or decisions (facts). Decisions are theirs: ask them early.
 - Skip a guard. If a check fails, fix it or report it with the exact command.

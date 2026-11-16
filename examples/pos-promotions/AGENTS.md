@@ -1,11 +1,11 @@
 # AGENTS.md
 
-Rules for every agent working in this repo (Claude Code, Codex, OpenCode, …). Project facts go in `product/context.md`; this file is the delivery framework (AI Delivery Kit v3).
+Rules for every agent working in this repo (Claude Code, Codex, OpenCode, …). Project facts go in `product/context.md`; this file is the delivery framework (AI Delivery Kit v4).
 
 ## Where things live
 - `product/` — the truth about the product, written for humans (BA, client) first:
   `context.md` (goal, users, constraints, glossary), `map.md` (capability map), `specs/<capability>/spec.md` + `examples.md`,
-  `decisions/D-xx-*.md` (decision cards), `questions.md` (client question list, generated), `changes/CR-xx-*/` (change requests as deltas), `research/`, `ux/`, `architecture/`, `plan/slices.md`.
+  `discovery/<topic>/interview.md` (interview logs: every question, answer and its source), `decisions/D-xx-*.md` (decision cards), `client-questions.md` (questionnaire for the client), `questions.md` (open client questions, generated), `changes/CR-xx-*/` (change requests as deltas), `research/`, `ux/`, `architecture/`, `plan/slices.md`.
 - `knowledge/` — reusable domain knowledge with sources (domain, law, hard cases, integrations, glossary). Read it before drafting; add to it only through the knowledge skill.
 - `work/` — run state: `BOARD.md` (generated), `effort-ledger.md`, `slices/<slice>.md` (one file per slice: brief, result, walkthrough, review), `evidence/<slice>/` (final screenshots only). Local only, git-ignored: `jobs/`, `tasks/`, `review-pack/`. Do not create other files in `work/`.
 - `.flow/` — framework: recipes, templates, hooks, sensors, `config.json`. `.claude/` — skills and subagents.
@@ -20,6 +20,7 @@ Rules for every agent working in this repo (Claude Code, Codex, OpenCode, …). 
 7. Never commit secrets, never log credentials, never edit `.env`.
 8. Before you stop: run `node .flow/sensors/flow.mjs check` and fix what it reports.
 9. A spec goes to its gate only with `flow.mjs spec-lint` at 0 errors and an independent spec-critic pass.
+10. Every rule in a spec has a basis (`Căn cứ`): an interview answer `[<CAP>-Qnn]`, a document `[TL …]`, code `[CODE …]`, knowledge `[KB …]`, a decision `[D-xx]`, or a listed assumption `[GĐ-nn]`. Specs are written from a confirmed interview log, not from a request alone.
 
 ## Code
 Follow `docs/conventions.md` and copy the structure of the reference module it names. Record deliberate shortcuts in `product/debt.md`.

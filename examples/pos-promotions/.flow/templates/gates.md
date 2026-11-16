@@ -8,7 +8,9 @@ Người duyệt trả lời: **duyệt** / **sửa** (ghi mã dòng cần sửa
 
 ## spec (nội bộ: PO + SA)
 - [ ] Đọc bảng ví dụ trước: số đúng (tính lại vài dòng), đủ biên / âm / tổ hợp
-- [ ] Luật khớp nguồn và `knowledge/`; chỗ nào tự đặt đều ghi `Giả định`
+- [ ] Có log phỏng vấn đã xác nhận "Hiểu biết chung"
+- [ ] Mọi luật có Căn cứ; xem tỉ lệ giả định trên review pack (cao thì hỏi thêm trước khi duyệt)
+- [ ] Luật khớp nguồn và `knowledge/`; chỗ nào tự đặt đều ghi `GĐ-nn`
 - [ ] `spec-lint`: 0 lỗi; cảnh báo còn lại đã xem
 - [ ] Spec critic: không còn blocker
 - [ ] Câu hỏi cho khách có phương án + đề xuất + mặc định

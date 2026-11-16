@@ -5,9 +5,9 @@ Several capabilities, or anything core that needs a design decision. Lanes: **E 
 | # | Step (skill) | Output | Gate |
 |---|---|---|---|
 | 1 | triage | route plan, size, flags | **route** (Dev/TL confirms) |
-| 2 | discover | sources read, context, capability map with depth, unknowns as cards | |
+| 2 | elicit (discover runs in the background) | interview log, story map, rounds of key decisions, client questionnaire, confirmed shared understanding | each round is a short human stop |
 | 3 | explore (as many as needed, in parallel) | research briefs, POC results, decision cards | owner decides each card |
-| 4 | define (one ba subagent per capability, in parallel) + spec critic | specs, examples, question list; `spec-lint` clean | **spec** (PO + SA) |
+| 4 | define from the log (one ba subagent per capability, in parallel) + spec critic | specs with a basis per rule, examples; `spec-lint` clean | **spec** (PO + SA) |
 | 5 | client confirmation | client question list sent; answers merged | **scope** (client) |
 | 6 | architect ‖ ux-options | architecture, ADRs, contracts · UI options | **design** · **ui** |
 | 7 | plan | features → slices, skeleton first | |

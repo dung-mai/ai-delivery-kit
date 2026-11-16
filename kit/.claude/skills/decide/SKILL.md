@@ -16,4 +16,4 @@ Stop the flow only for a card that is high impact AND hard to reverse AND blocks
 Show open cards, blocking ones first, each in ≤ 5 lines with options and the recommendation; ask with options. Batch: never one question at a time.
 
 ## Recording a decision
-Set status, `Quyết định:` line, who and when; update the specs/plan it affects in the same change (assumption lines become rules); if it changes approved behaviour, open a change request instead of editing silently. Run `flow.mjs questions` so the client list stays current.
+Set status, `Quyết định:` line, who and when; update the specs/plan it affects in the same change (assumption lines become rules); if it changes approved behaviour, open a change request instead of editing silently. Run `flow.mjs questions` so the client list stays current, and update `product/client-questions.md` when a client question is answered or added.

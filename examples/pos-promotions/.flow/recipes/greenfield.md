@@ -3,9 +3,9 @@
 | # | Step (skill) | Output | Gate |
 |---|---|---|---|
 | 1 | triage | `product/context.md`, recipe chosen | human confirms plan |
-| 2 | discover | `product/map.md`, demo script, draft decision cards | **scope** |
+| 2 | elicit for the product (discover in the background) | `product/context.md`, story map → `product/map.md`, demo script, interview log | **scope** |
 | 3 | explore | research briefs, POC results, decision cards for the open unknowns | |
-| 4 | define + spec critic | `product/specs/<cap>/spec.md` + `examples.md` per capability, `product/questions.md`; `spec-lint` clean | **spec** |
+| 4 | elicit per capability → define + spec critic | `product/specs/<cap>/spec.md` + `examples.md` per capability, `product/questions.md`; `spec-lint` clean | **spec** |
 | 5 | ux-options | `product/ux/options/index.html`, `design-system.md` | **ux** |
 | 6 | architect | `product/architecture/overview.md`, ADRs, stack | **architecture** |
 | 7 | plan | `product/plan/slices.md` (slice 0 = skeleton) | (with architecture) |
