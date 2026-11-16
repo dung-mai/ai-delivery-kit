@@ -8,6 +8,8 @@ Bộ framework giao việc phần mềm cho AI agent, dùng lại được giữ
 
 ## v4: lane Requirement là một cuộc hỏi đáp
 
+![Lane Requirement v4](docs/Requirement-lane-v4.png)
+
 Làm lại sau góp ý: agent nghĩ lâu rồi chỉ hỏi 1 câu, không thấy đang ở đâu, không rõ spec dựa vào đâu.
 
 1. **Nhận việc** (câu hỏi đầu ≤ 2 phút): bảng căn cứ nhanh; skill `discover` đọc sâu **chạy nền**; vòng 1 hỏi đích, phạm vi, cái không làm.
